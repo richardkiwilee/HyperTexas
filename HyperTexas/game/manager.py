@@ -1,6 +1,9 @@
+from HyperTexas.game.table import Disable_Diamond, Disable_Head, Disable_Heart
 from .level import Level
 from .deck import Deck
 from .character import *
+from .tarot import Tarot
+from .planet import Planet
 
 class Manager:
     def __init__(self):
@@ -22,7 +25,25 @@ class Manager:
 
     def GetScorablePokers(self, cards: list) -> list:
         # 获取可计算得分的扑克
-        return []
+        scorable_cards = []
+        for card in cards:
+            if self.table_effect == Disable_Heart and card.Color == Poker_Color_Heart:
+                continue
+            if card.table_effect == Disable_Diamond and card.Color == Poker_Color_Diamond:
+                continue
+            if card.table_effect == Disable_Club and card.Color == Poker_Color_Club:
+                continue
+            if card.table_effect == Disable_Spade and card.Color == Poker_Color_Spade:
+                continue
+            if card.table_effect == Disable_Head:
+                if card.Number == Poker_Number_J:
+                    continue
+                if card.Number == Poker_Number_Q:
+                    continue
+                if card.Number == Poker_Number_K:
+                    continue
+                scorable_cards.append(card) 
+        return scorable_cards
 
     def ScoreCard(self, character: Character, poker: Poker):
         if poker.Material == Poker_Material_Universal:
@@ -73,6 +94,7 @@ class Manager:
         if poker.Number == Poker_Number_K:
             character.chip += 10
 
+
     def TrigTableEffect(self, character: Character):
         if self.table_effect == Enhance_No_Pair:
             if character.played_type == Score_Name_No_Pair:
@@ -92,7 +114,7 @@ class Manager:
         if self.table_effect == Enhance_Flush:
             if character.played_type == Score_Name_Flush:
                 character.mag *= 2
-                
+
         if self.table_effect == Lower_Level:
             pass
         if self.table_effect == Disable_Flush:
@@ -147,14 +169,16 @@ class Manager:
                 character.gold += 3
             if poker.Wax == Poker_Wax_Red:
                 self.ScoreCard(character, poker)
-                for joker in self.joker:
+                for joker in self.joker:    # type: Joker
                     joker.Score(character, poker)
             if poker.Wax == Poker_Wax_Blue:
-                # 生成一张当前出牌的星球牌
-                pass
+                if len(character.consume) < character.max_consume:
+                    _planet = Planet(_type)
+                    character.consume.append(_planet)
             if poker.Wax == Poker_Wax_Purple:
-                # 生成一张塔罗牌
-                pass
+                if len(character.consume) < character.max_consume:
+                    _tarot = Tarot(_type)
+                    character.consume.append(_tarot)
         for joker in self.joker:    # type: Joker
             joker.Trig(character)
         self.TrigTableEffect(character)
