@@ -1,19 +1,19 @@
 import time
-
 import grpc
 import threading
 import queue
 import sys
 import random
 import string
-import threading
-import grpc
 import argparse
 import json
 import os
-import cabo.protocol.service_pb2 as pb2
-import cabo.protocol.service_pb2_grpc as rpc
-from cabo.core import GameManager, Card, NUMBER_peek, NUMBER_SPY, NUMBER_SWITCH, GameStatus
+import HyperTexas.protocol.service_pb2 as pb2
+import HyperTexas.protocol.service_pb2_grpc as rpc
+from HyperTexas.game.manager import Manager
+from HyperTexas.game.poker import Card
+from HyperTexas.game.effects import NUMBER_peek, NUMBER_SPY, NUMBER_SWITCH
+from HyperTexas.game.character import GameStatus
 
 
 class Client:
@@ -21,9 +21,9 @@ class Client:
         self.username = username
         # 创建 gRPC 通道和存根
         channel = grpc.insecure_channel(address + ':' + str(port))
-        self.stub = rpc.CaboRoomStub(channel)
+        self.stub = rpc.LobbyStub(channel)
         # 启动一个新线程监听消息
-        self.gm = GameManager()
+        self.gm = Manager()
         registerResp = self.stub.Register(pb2.GeneralRequest(name=self.username))
         if not registerResp.ok:
             print('Failed to register chatroom: {}'.format(registerResp.msg))

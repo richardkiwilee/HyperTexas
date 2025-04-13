@@ -7,18 +7,22 @@ from .planet import Planet
 
 class Manager:
     def __init__(self):
-        self.level = Level()
         self.character_dict = dict()
         self.public_cards = []
         self.deck = Deck()
         self.deck.shuffle()
-        self.table_effect = None
-        self.current_round = 0
+        self.table_effects = []
         self.active_players = []  # 当前回合活跃的玩家列表
+        self.base_chip = 30 * 10000     # 初始30万筹码
+        self.winner_chip_pct = 0.5      # 胜利者的筹码需要达到总筹码的50%
 
-    def CalInterest(self, character: Character):
-        # 计算利息
-        return min(character.max_interest, character.gold//character.per_interest)
+    def set_init_chips(self, chip):
+        # 设置初始筹码数x万
+        self.base_chip = chip * 10000
+
+    def set_winner_chip_pct(self, pct):
+        if pct < 1 and pct > 0:
+            self.winner_chip_pct = pct
 
     def FindPlayType(self, cards: list):
         # 根据self.poker_play找到类型
@@ -154,22 +158,20 @@ class Manager:
         character.chip, character.mag = BASE_SCORE[_type]
         bouns_chip, bouns_mag = LEVEL_BOUNS_SCORE[_type]
         level = character.level.get(_type) or 0
-        # 特殊处理
-        if self.table_effect == Lower_Level:
-            level = level // 2
+        
         character.chip += bouns_chip * level
         character.mag += bouns_mag * level
         for poker in self.poker_play: # type: Poker
             if poker.id not in scorable:
                 continue
             self.ScoreCard(character, poker)
-            for joker in self.joker:    # type: Joker
+            for joker in character.joker:    # type: Joker
                 joker.Score(character, poker)
             if poker.Wax == Poker_Wax_Gold:
                 character.gold += 3
             if poker.Wax == Poker_Wax_Red:
                 self.ScoreCard(character, poker)
-                for joker in self.joker:    # type: Joker
+                for joker in character.joker:    # type: Joker
                     joker.Score(character, poker)
             if poker.Wax == Poker_Wax_Blue:
                 if len(character.consume) < character.max_consume:
@@ -179,7 +181,7 @@ class Manager:
                 if len(character.consume) < character.max_consume:
                     _tarot = Tarot(_type)
                     character.consume.append(_tarot)
-        for joker in self.joker:    # type: Joker
+        for joker in character.joker:    # type: Joker
             joker.Trig(character)
         self.TrigTableEffect(character)
         return character.chip * character.mag

@@ -2,16 +2,14 @@ from .base_score import *
 
 class Character:
     def __init__(self):
+        self.desc = ""
         self.max_poker = 2      # 最大扑克手牌数
         self.poker = []
         self.poker_play = []
-        self.max_joker = 5      # 最大小丑牌数
-        self.joker = []
-        self.max_consume = 3    # 最多3个消耗牌
+        self.max_consume = 5    # 最多5个消耗牌
         self.consume = []
-        self.gold = 4           # 初始金币数    
-        self.per_interest = 5   # 每5金币获得利息
-        self.max_interest = 5   # 最多5个金币利息
+        self.effects = []
+        self.gold = 0           # 初始筹码数    
         self.skill = None
         self.level = {
             Score_Name_No_Pair : 0,

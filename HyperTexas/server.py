@@ -4,35 +4,35 @@ import queue
 import random
 import json
 import grpc
-import cabo.protocol.service_pb2 as pb2
-import cabo.protocol.service_pb2_grpc as rpc
-from cabo.core import GameManager, GameStatus, create_seed
+import HyperTexas.protocol.service_pb2 as pb2
+import HyperTexas.protocol.service_pb2_grpc as rpc
+from HyperTexas.game.manager import Manager
 from concurrent.futures import ThreadPoolExecutor
+from HyperTexas.action import *
 
-
-caboroomUsers = {}
-caboroomNames = set()
+Users = {}
+Names = set()
 queues = []
 
 
-class CaboRoomServicer(rpc.CaboRoomServicer):
+class LobbyServicer(rpc.LobbyServicer):
     def __init__(self):
-        self.gm = GameManager()
+        self.gm = Manager()
         self.gm.game_status = GameStatus.LOBBY.value
         self.host = None
         self.seq = 0
 
     def Register(self, request, context):
         cname = request.name
-        if len(caboroomUsers) == 0:
+        if len(Users) == 0:
             self.host = cname
         if cname is None or len(cname) >= 32:
             return pb2.GeneralResponse(ok=False, msg='Illegal name')
-        if cname in caboroomNames:
+        if cname in Names:
             return pb2.GeneralResponse(ok=False, msg='This name has been used')
 
-        caboroomNames.add(cname)
-        caboroomUsers[cname] = {
+        Names.add(cname)
+        Users[cname] = {
             'name': cname
         }
         self._putToQueues({
@@ -55,7 +55,7 @@ class CaboRoomServicer(rpc.CaboRoomServicer):
             if request.msg == 'start' and self.host != request.name:
                 return pb2.GeneralResponse(ok=False, msg='You are not the host')
             if self.host == request.name and request.msg == 'start':
-                if len(caboroomUsers) == 1:
+                if len(Users) == 1:
                     return pb2.GeneralResponse(ok=False, msg='You are the only one here')
                 if not all(self.gm.ready_status.values()):
                     return pb2.GeneralResponse(ok=False, msg='Not all players are ready')
@@ -65,14 +65,11 @@ class CaboRoomServicer(rpc.CaboRoomServicer):
                         'name': 'server',
                         'seq': 0
                     })
-                # print('Game started')
                 self.gm.game_status = GameStatus.PLAYING.value
-                _seed = create_seed(len(caboroomUsers))
-                # print('Seed:', _seed)
+                _seed = create_seed(len(Users))
                 _order = self.gm.turnorder.shuffle()
-                # print('Order:', _order)
                 peek_dict = dict()
-                for user in caboroomUsers:
+                for user in Users:
                     peek_dict[user] = []
                     while len(set(peek_dict[user])) < 2:
                         _index = random.randint(0, 3)
@@ -106,7 +103,7 @@ class CaboRoomServicer(rpc.CaboRoomServicer):
             # print('receive request:', request)
             if self.gm.valid_action(request):
                 self.gm.handle(request)
-                curUser = caboroomUsers[request.name]
+                curUser = Users[request.name]
                 self._putToQueues({
                     'type': pb2.Broadcast.PLAYER_ACTION,
                     'seq': self.gm.seq,
@@ -150,7 +147,7 @@ class CaboRoomServicer(rpc.CaboRoomServicer):
         if not self._isAuthorized(request):
             return pb2.Broadcast()
 
-        if 'stream' in caboroomUsers[request.name]:
+        if request.name in Users:
             return pb2.Broadcast(type=pb2.Broadcast.FAILURE, msg='Already subscribed')
 
         cb_added = context.add_callback(self._onDisconnectWrapper(request, context))
@@ -161,11 +158,11 @@ class CaboRoomServicer(rpc.CaboRoomServicer):
 
         q = queue.Queue()
         queues.append(q)
-        caboroomUsers[request.name]['stream'] = q
+        Users[request.name]['stream'] = q
         yield pb2.Broadcast(type=pb2.Broadcast.UNSPECIFIED)
 
         while True:
-            q = caboroomUsers[request.name]['stream']
+            q = Users[request.name]['stream']
             obj = q.get()
             if obj is None:
                 yield pb2.Broadcast(type=pb2.Broadcast.FAILURE, msg='The server is shutting down')
@@ -174,12 +171,12 @@ class CaboRoomServicer(rpc.CaboRoomServicer):
             q.task_done()
 
     def _putToQueues(self, obj):
-        for _, user in caboroomUsers.items():
+        for _, user in Users.items():
             if 'stream' in user:
                 user['stream'].put(obj)
 
     def _isAuthorized(self, request):
-        return not(request.name is None or request.name not in caboroomUsers)
+        return not(request.name is None or request.name not in Users)
 
     def _onDisconnectWrapper(self, request, context):
         # Be careful! The error here is silently ignored!
@@ -197,7 +194,7 @@ class CaboRoomServicer(rpc.CaboRoomServicer):
 
 def serve(port=50051):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
-    rpc.add_CaboRoomServicer_to_server(CaboRoomServicer(), server)
+    rpc.add_LobbyServicer_to_server(LobbyServicer(), server)
     server.add_insecure_port(f'[::]:{port}')
     server.start()
     # print('>>> Server started')
