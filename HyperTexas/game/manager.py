@@ -9,100 +9,113 @@ class Manager:
     def __init__(self):
         self.character_dict = dict()
         self.public_cards = []
-        self.last_used_cards =[]
+        self.last_used_cards = []
         self.deck = Deck()
         self.deck.shuffle()
-        # self.table_effects = []
         self.active_players = []  # 当前回合活跃的玩家列表
         self.base_chip = 30 * 10000     # 初始30万筹码
         self.level = 1      # 每个回合 输的人要额外支付level * 1k的底注
         self.player_deals = {}  # 记录玩家的出牌
+        self.current_player_index = 0  # 当前操作玩家的索引
+        self.round_confirmations = set()  # 记录已确认结果的玩家
+        self.game_status = GameStatus.LOBBY.value
 
     def set_init_chips(self, chip):
         # 设置初始筹码数x万
         self.base_chip = chip * 10000
 
     def GameFinished(self):
+        """检查游戏是否结束"""
         for character in self.character_dict.values():
             if character.gold <= 0:
                 return True
         return False
 
-    def FindPlayType(self, cards: list):
-        # 根据self.poker_play找到类型
-        _type = Score_Name_No_Pair
-        return _type
-
-    def deal_initial_cards(self):
-        """发放初始牌：3张公共牌和每个玩家2张手牌"""
-        self.public_cards = []
-        # 发放3张公共牌
-        for _ in range(3):
+    def deal_cards(self, count=1, target=None):
+        """通用的发牌函数
+        
+        Args:
+            count: 要发的牌数
+            target: 发给谁（None表示发公共牌）
+            
+        Returns:
+            list: 发出的牌列表
+        """
+        cards = []
+        for _ in range(count):
             card = self.deck.draw()
             if card:
-                self.public_cards.append(card)
-        
-        # 给每个玩家发2张手牌
-        for player in self.active_players:
-            player.pokers = []
-            for _ in range(2):
-                card = self.deck.draw()
-                if card:
-                    player.pokers.append(card)
+                cards.append(card)
+                if target:
+                    target.pokers.append(card)
+                else:
+                    self.public_cards.append(card)
+        return cards
 
-    def deal_community_card(self):
-        """发放一张公共牌"""
-        card = self.deck.draw()
-        if card:
-            self.public_cards.append(card)
+    def get_current_player(self):
+        """获取当前回合的玩家"""
+        if not self.active_players:
+            return None
+        return self.active_players[self.current_player_index]
 
-    def player_action(self, character: Character):
-        """玩家执行操作"""
-        # TODO: 实现玩家的具体操作（check, bet, fold等）
-        pass
+    def next_player(self):
+        """移动到下一个玩家"""
+        self.current_player_index = (self.current_player_index + 1) % len(self.active_players)
+        return self.get_current_player()
 
-    def play_round(self):
-        """执行一个完整的德州扑克回合"""
-        self.current_round += 1
-        self.deck.shuffle()  # 每轮开始时洗牌
-        
+    def record_player_deal(self, player_name, cards):
+        """记录玩家的出牌"""
+        # TODO: 在这里添加出牌合法性检查
+        self.player_deals[player_name] = cards
+        return True
+
+    def all_players_dealt(self):
+        """检查是否所有玩家都已出牌"""
+        return len(self.player_deals) == len(self.active_players)
+
+    def confirm_round_result(self, player_name):
+        """玩家确认回合结果"""
+        self.round_confirmations.add(player_name)
+        return len(self.round_confirmations) == len(self.active_players)
+
+    def start_new_round(self):
+        """开始新的一轮"""
+        self.game_status = GameStatus.ROUND_START.value
+        self.current_player_index = 0
+        self.round_confirmations.clear()
+        self.public_cards.clear()
+        self.player_deals.clear()
+        self.deck.shuffle()
         # 重置玩家状态
-        self.active_players = list(self.character_dict.values())
-        
-        # Pre-flop: 发放初始牌
-        self.deal_initial_cards()
-        
-        # 第一轮操作
         for player in self.active_players:
-            self.player_action(player)
+            player.pokers.clear()
+
+    def calculate_round_result(self):
+        """计算本回合的结果"""
+        result = {
+            'deals': self.player_deals,
+            'scores': {}
+        }
         
-        # Flop后的操作已完成，发第4张牌 (Turn)
-        self.deal_community_card()
-        
-        # 第二轮操作
-        for player in self.active_players:
-            self.player_action(player)
-            
-        # 发第5张牌 (River)
-        self.deal_community_card()
-        
-        # 最后一轮操作
-        for player in self.active_players:
-            self.player_action(player)
-            
-        # 结算所有玩家的分数
+        # 计算每个玩家的得分
         for player in self.active_players:
             # 合并公共牌和手牌进行最终计算
             all_cards = player.pokers + self.public_cards
-            self.Score(player)
+            score = self.Score(player)
+            result['scores'][player.name] = score
+        
+        return result
 
-    
-    def Score(self, character: Character) -> int:
-        # 计算得分
-        _score_info = {'score_type': None, 'score_level': 0, 
-                       'add_chip': 0, 'add_mag': 0,
-                       'mut_mag': 1.0
-                       }
+    def Score(self, character):
+        """计算玩家得分"""
+        # 保留原有的得分计算逻辑
+        _score_info = {
+            'score_type': None,
+            'score_level': 0,
+            'add_chip': 0,
+            'add_mag': 0,
+            'mut_mag': 1.0
+        }
         _type = self.FindPlayType()
         _score_info['score_type'] = _type
         character.played_type = _type
@@ -232,42 +245,48 @@ class Manager:
         if self.table_effect == Debuff_Big_Bet:
             pass
 
-    def record_player_deal(self, player_name, cards):
-        """记录玩家的出牌
+    def FindPlayType(self, cards: list):
+        # 根据self.poker_play找到类型
+        _type = Score_Name_No_Pair
+        return _type
+
+    def play_round(self):
+        """执行一个完整的德州扑克回合"""
+        self.current_round += 1
+        self.deck.shuffle()  # 每轮开始时洗牌
         
-        Args:
-            player_name: 玩家名称
-            cards: 出的牌列表
+        # 重置玩家状态
+        self.active_players = list(self.character_dict.values())
+        
+        # Pre-flop: 发放初始牌
+        for player in self.active_players:
+            self.deal_cards(count=2, target=player)
+        
+        # 第一轮操作
+        for player in self.active_players:
+            self.player_action(player)
+        
+        # Flop后的操作已完成，发第4张牌 (Turn)
+        self.deal_cards(count=1)
+        
+        # 第二轮操作
+        for player in self.active_players:
+            self.player_action(player)
             
-        Returns:
-            bool: 出牌是否合法
-        """
-        # TODO: 在这里添加出牌合法性检查
-        self.player_deals[player_name] = cards
-        return True
+        # 发第5张牌 (River)
+        self.deal_cards(count=1)
+        
+        # 最后一轮操作
+        for player in self.active_players:
+            self.player_action(player)
+            
+        # 结算所有玩家的分数
+        for player in self.active_players:
+            # 合并公共牌和手牌进行最终计算
+            all_cards = player.pokers + self.public_cards
+            self.Score(player)
 
-    def all_players_dealt(self):
-        """检查是否所有玩家都已出牌
-        
-        Returns:
-            bool: 是否所有玩家都已出牌
-        """
-        return len(self.player_deals) == len(self.active_players)
-
-    def calculate_round_result(self):
-        """计算本回合的结果
-        
-        Returns:
-            dict: 回合结果，包含每个玩家的得分等信息
-        """
-        result = {
-            'deals': self.player_deals,
-            'scores': {}
-        }
-        
-        # TODO: 在这里实现回合结果计算逻辑
-        
-        # 清空本回合的出牌记录
-        self.player_deals = {}
-        
-        return result
+    def player_action(self, character: Character):
+        """玩家执行操作"""
+        # TODO: 实现玩家的具体操作（check, bet, fold等）
+        pass
