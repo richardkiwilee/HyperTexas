@@ -73,7 +73,6 @@ class LobbyServicer(rpc.LobbyServicer):
             )
             # 这里可以添加默认的超时处理逻辑，比如跳过该玩家的操作
 
-
     def _start_player_timer(self, player_name):
         """为玩家启动操作定时器"""
         if player_name in self.player_timers:
@@ -166,13 +165,56 @@ class LobbyServicer(rpc.LobbyServicer):
         if self.gm.game_status == GameStatus.BEFORE_PUBLIC_CARDS_5.value:
             pass
         if self.gm.game_status == GameStatus.BEFORE_OPEN.value:
-            pass
+            self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({'PlayerOrder': [p.name for p in self.gm.active_players]}))
+            return self._response(1, 200, json.dumps('Before Open'))
         if self.gm.game_status == GameStatus.COLLECT_DEAL.value:
-            pass
+            # 检查是否是合法的出牌请求
+            if 'action' not in body or 'cards' not in body:
+                return self._response(1, 400, json.dumps('Invalid request format'))
+            
+            player_name = request.name
+            # 记录玩家的出牌
+            if not self.gm.record_player_deal(player_name, body['cards']):
+                return self._response(1, 400, json.dumps('Invalid cards'))
+            
+            # 广播玩家的出牌信息
+            self._broadcast(
+                msgtype=BroadcastType.CONFIRM_ACTION.value,
+                status=200,
+                sender=player_name,
+                body=json.dumps({
+                    'action': 'deal',
+                    'player': player_name,
+                    'cards': body['cards']
+                })
+            )
+            
+            # 检查是否所有玩家都已出牌
+            if self.gm.all_players_dealt():
+                # 所有玩家都已出牌，进入回合结束阶段
+                self.gm.game_status = GameStatus.ROUND_END.value
+                # 计算本回合结果
+                round_result = self.gm.calculate_round_result()
+                # 广播回合结果
+                self._broadcast(
+                    msgtype=BroadcastType.UPDATE_STATUS.value,
+                    status=200,
+                    sender='__SYSTEM__',
+                    body=json.dumps({
+                        'type': 'round_end',
+                        'result': round_result
+                    })
+                )
+                return self._response(1, 200, json.dumps('Round ended'))
+            else:
+                # 还有玩家未出牌
+                return self._response(1, 200, json.dumps('Deal recorded'))
         if self.gm.game_status == GameStatus.ROUND_END.value:
-            pass
+            self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({'PlayerOrder': [p.name for p in self.gm.active_players]}))
+            self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({'PlayerOrder': [p.name for p in self.gm.active_players]}))
         if self.gm.game_status == GameStatus.GAME_END.value:
-            pass
+            self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({'PlayerOrder': [p.name for p in self.gm.active_players]}))
+            self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({'PlayerOrder': [p.name for p in self.gm.active_players]}))
         
     def Subscribe(self, request, context):
         if not self._isAuthorized(request):

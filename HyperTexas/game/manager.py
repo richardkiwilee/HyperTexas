@@ -16,6 +16,7 @@ class Manager:
         self.active_players = []  # 当前回合活跃的玩家列表
         self.base_chip = 30 * 10000     # 初始30万筹码
         self.level = 1      # 每个回合 输的人要额外支付level * 1k的底注
+        self.player_deals = {}  # 记录玩家的出牌
 
     def set_init_chips(self, chip):
         # 设置初始筹码数x万
@@ -230,3 +231,43 @@ class Manager:
             pass
         if self.table_effect == Debuff_Big_Bet:
             pass
+
+    def record_player_deal(self, player_name, cards):
+        """记录玩家的出牌
+        
+        Args:
+            player_name: 玩家名称
+            cards: 出的牌列表
+            
+        Returns:
+            bool: 出牌是否合法
+        """
+        # TODO: 在这里添加出牌合法性检查
+        self.player_deals[player_name] = cards
+        return True
+
+    def all_players_dealt(self):
+        """检查是否所有玩家都已出牌
+        
+        Returns:
+            bool: 是否所有玩家都已出牌
+        """
+        return len(self.player_deals) == len(self.active_players)
+
+    def calculate_round_result(self):
+        """计算本回合的结果
+        
+        Returns:
+            dict: 回合结果，包含每个玩家的得分等信息
+        """
+        result = {
+            'deals': self.player_deals,
+            'scores': {}
+        }
+        
+        # TODO: 在这里实现回合结果计算逻辑
+        
+        # 清空本回合的出牌记录
+        self.player_deals = {}
+        
+        return result
