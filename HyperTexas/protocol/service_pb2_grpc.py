@@ -14,11 +14,6 @@ class LobbyStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Register = channel.unary_unary(
-                '/lobby.Lobby/Register',
-                request_serializer=service__pb2.GeneralRequest.SerializeToString,
-                response_deserializer=service__pb2.GeneralResponse.FromString,
-                )
         self.Handle = channel.unary_unary(
                 '/lobby.Lobby/Handle',
                 request_serializer=service__pb2.GeneralRequest.SerializeToString,
@@ -33,12 +28,6 @@ class LobbyStub(object):
 
 class LobbyServicer(object):
     """Missing associated documentation comment in .proto file."""
-
-    def Register(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
     def Handle(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -55,11 +44,6 @@ class LobbyServicer(object):
 
 def add_LobbyServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Register': grpc.unary_unary_rpc_method_handler(
-                    servicer.Register,
-                    request_deserializer=service__pb2.GeneralRequest.FromString,
-                    response_serializer=service__pb2.GeneralResponse.SerializeToString,
-            ),
             'Handle': grpc.unary_unary_rpc_method_handler(
                     servicer.Handle,
                     request_deserializer=service__pb2.GeneralRequest.FromString,
@@ -79,23 +63,6 @@ def add_LobbyServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class Lobby(object):
     """Missing associated documentation comment in .proto file."""
-
-    @staticmethod
-    def Register(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/lobby.Lobby/Register',
-            service__pb2.GeneralRequest.SerializeToString,
-            service__pb2.GeneralResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def Handle(request,

@@ -4,7 +4,6 @@ syntax = "proto3";
 package lobby;
 
 service Lobby {
-  rpc Register (GeneralRequest) returns (GeneralResponse) {}
   rpc Handle (GeneralRequest) returns (GeneralResponse) {}
   rpc Subscribe (GeneralRequest) returns (stream Broadcast) {}
 }
