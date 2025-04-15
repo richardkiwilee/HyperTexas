@@ -24,12 +24,12 @@ class Client:
         self.stub = rpc.LobbyStub(channel)
         # 启动一个新线程监听消息
         self.gm = Manager()
-        registerResp = self.stub.Register(pb2.GeneralRequest(name=self.username))
-        if not registerResp.ok:
-            print('Failed to register chatroom: {}'.format(registerResp.msg))
+        loginResp = self.stub.Handle(pb2.GeneralRequest(name=self.username))
+        if loginResp.status != 200:
+            print('Failed to login chatroom: {}'.format(loginResp.msg))
             return
         self.gm.player_join(self.username)
-        self.gm.ready_status = json.loads(registerResp.msg)
+        self.gm.ready_status = json.loads(loginResp.msg)
         for player in self.gm.ready_status:
             if player not in self.gm.players.keys():
                 self.gm.player_join(player)

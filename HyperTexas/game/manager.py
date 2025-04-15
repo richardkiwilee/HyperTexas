@@ -1,9 +1,5 @@
-from HyperTexas.game.table import Disable_Diamond, Disable_Head, Disable_Heart
-from .level import Level
 from .deck import Deck
 from .character import *
-from .tarot import Tarot
-from .planet import Planet
 
 class Manager:
     def __init__(self):
@@ -12,7 +8,7 @@ class Manager:
         self.last_used_cards = []
         self.deck = Deck()
         self.deck.shuffle()
-        self.active_players = []  # 当前回合活跃的玩家列表
+        self.player_order = []  # 当前回合活跃的玩家列表
         self.base_chip = 30 * 10000     # 初始30万筹码
         self.level = 1      # 每个回合 输的人要额外支付level * 1k的底注
         self.player_deals = {}  # 记录玩家的出牌
@@ -54,13 +50,13 @@ class Manager:
 
     def get_current_player(self):
         """获取当前回合的玩家"""
-        if not self.active_players:
+        if not self.player_order:
             return None
-        return self.active_players[self.current_player_index]
+        return self.player_order[self.current_player_index]
 
     def next_player(self):
         """移动到下一个玩家"""
-        self.current_player_index = (self.current_player_index + 1) % len(self.active_players)
+        self.current_player_index = (self.current_player_index + 1) % len(self.player_order)
         return self.get_current_player()
 
     def record_player_deal(self, player_name, cards):
@@ -71,24 +67,37 @@ class Manager:
 
     def all_players_dealt(self):
         """检查是否所有玩家都已出牌"""
-        return len(self.player_deals) == len(self.active_players)
+        return len(self.player_deals) == len(self.player_order)
 
     def confirm_round_result(self, player_name):
         """玩家确认回合结果"""
         self.round_confirmations.add(player_name)
-        return len(self.round_confirmations) == len(self.active_players)
+        return len(self.round_confirmations) == len(self.player_order)
 
-    def start_new_round(self):
+    def start_new_round(self, new_starter=None):
         """开始新的一轮"""
         self.game_status = GameStatus.ROUND_START.value
         self.current_player_index = 0
         self.round_confirmations.clear()
+        for poker in self.public_cards:
+            self.deck.add(poker)
         self.public_cards.clear()
-        self.player_deals.clear()
-        self.deck.shuffle()
-        # 重置玩家状态
-        for player in self.active_players:
+        for player in self.player_order:
+            for poker in player.pokers:
+                self.deck.add(poker)
             player.pokers.clear()
+        for poker in self.deck:
+            poker.ResetVisible()
+        self.deck.shuffle()
+        for player in self.player_order:
+            player.pokers.clear()
+        if new_starter:
+            while True:
+                _0 = self.player_order[0]
+                if _0.username == new_starter:
+                    break
+                _tmp = self.player_order.pop(0)
+                self.player_order.append(_tmp)
 
     def calculate_round_result(self):
         """计算本回合的结果"""
@@ -98,7 +107,7 @@ class Manager:
         }
         
         # 计算每个玩家的得分
-        for player in self.active_players:
+        for player in self.player_order:
             # 合并公共牌和手牌进行最终计算
             all_cards = player.pokers + self.public_cards
             score = self.Score(player)
@@ -256,37 +265,41 @@ class Manager:
         self.deck.shuffle()  # 每轮开始时洗牌
         
         # 重置玩家状态
-        self.active_players = list(self.character_dict.values())
+        self.player_order = list(self.character_dict.values())
         
         # Pre-flop: 发放初始牌
-        for player in self.active_players:
+        for player in self.player_order:
             self.deal_cards(count=2, target=player)
         
         # 第一轮操作
-        for player in self.active_players:
+        for player in self.player_order:
             self.player_action(player)
         
         # Flop后的操作已完成，发第4张牌 (Turn)
         self.deal_cards(count=1)
         
         # 第二轮操作
-        for player in self.active_players:
+        for player in self.player_order:
             self.player_action(player)
             
         # 发第5张牌 (River)
         self.deal_cards(count=1)
         
         # 最后一轮操作
-        for player in self.active_players:
+        for player in self.player_order:
             self.player_action(player)
             
         # 结算所有玩家的分数
-        for player in self.active_players:
+        for player in self.player_order:
             # 合并公共牌和手牌进行最终计算
             all_cards = player.pokers + self.public_cards
             self.Score(player)
 
-    def player_action(self, character: Character):
-        """玩家执行操作"""
-        # TODO: 实现玩家的具体操作（check, bet, fold等）
-        pass
+    def dumpPlayerInfo(self):
+        info = dict()
+        info['current_player_index'] = self.current_player_index
+        info['users'] = self.player_order   
+        info['public_cards'] = [i.to_dict() for i in self.public_cards]
+        info['last_used_cards'] = self.last_used_cards
+        info['deck'] = [i.to_dict() for i in self.deck]       # 默认玩家是无法看到牌顶的
+        return info

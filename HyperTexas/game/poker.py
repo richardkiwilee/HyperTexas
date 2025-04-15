@@ -47,4 +47,29 @@ class Poker:
         self.Color = None       # 花色
         self.Material = None    # 材质
         self.Wax = None         # 蜡封
-    
+        self.change = []        # 变更记录
+        # 可见性 仅记录数字和花色. 材质和蜡封对所有人可见
+        self.visible = {'number': [], 'color': []}
+
+    def __init__(self, info: dict):
+        self.id = info['id']
+        self.Number = info['Number']      # 数字
+        self.Color = info['Color']       # 花色
+        self.Material = info['Material']    # 材质
+        self.Wax = info['Wax']         # 蜡封
+        self.change = info['change']
+        self.visible = info['visible']
+
+    def ResetVisible(self):
+        self.visible = {'number': [], 'color': []}
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'Number': self.Number,
+            'Color': self.Color,
+            'Material': self.Material,
+            'Wax': self.Wax,
+            'change': self.change,
+            'visible': self.visible
+        }
