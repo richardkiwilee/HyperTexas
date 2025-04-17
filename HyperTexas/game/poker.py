@@ -47,7 +47,7 @@ class Poker:
         self.Color = None       # 花色
         self.Material = None    # 材质
         self.Wax = None         # 蜡封
-        self.change = []        # 变更记录
+        self.change = 0        # 变更记录
         # 可见性 仅记录数字和花色. 材质和蜡封对所有人可见
         self.visible = {'number': [], 'color': []}
 

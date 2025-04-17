@@ -1,4 +1,4 @@
-from .deck import Deck
+from .deck import Deck, ConsumeDeck
 from .character import *
 
 class Manager:
@@ -7,7 +7,9 @@ class Manager:
         self.public_cards = []
         self.last_used_cards = []
         self.deck = Deck()
+        self.consume = ConsumeDeck()
         self.deck.shuffle()
+        self.consume.shuffle()
         self.player_order = []  # 当前回合活跃的玩家列表
         self.base_chip = 30 * 10000     # 初始30万筹码
         self.level = 1      # 每个回合 输的人要额外支付level * 1k的底注

@@ -1,4 +1,5 @@
 from .poker import Poker, Poker_Colors, Poker_Numbers
+from .card import Card
 
 class Deck:
     def __init__(self):
@@ -29,3 +30,20 @@ class Deck:
             if poker.id == id:
                 return poker
         return None
+
+class ConsumeDeck:
+    def __init__(self):
+        self.cards = []
+        
+        
+    def shuffle(self):
+        random.shuffle(self.cards)
+
+    def Draw(self):
+        return self.cards.pop(0)
+
+    def Add(self, card: Card):
+        self.cards.append(card)
+
+    def Pop(self):
+        return self.cards.pop()
