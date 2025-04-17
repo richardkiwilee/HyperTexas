@@ -16,6 +16,12 @@ from HyperTexas.game.effects import NUMBER_peek, NUMBER_SPY, NUMBER_SWITCH
 from HyperTexas.game.character import GameStatus
 
 
+test_dict = {''}
+
+def RefreshScreen(info: dict):
+    pass
+
+
 class Client:
     def __init__(self, username: str, address='localhost', port=50051):
         self.username = username
@@ -257,7 +263,8 @@ def main(address='localhost', port=50051, username=None):
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print('Bye')
+    # try:
+    #     main()
+    # except KeyboardInterrupt:
+    #     print('Bye')
+    RefreshScreen(test_dict)
