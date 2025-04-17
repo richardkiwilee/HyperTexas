@@ -298,7 +298,7 @@ class Manager:
     def dumpPlayerInfo(self):
         info = dict()
         info['current_player_index'] = self.current_player_index
-        info['users'] = self.player_order   
+        info['players'] = self.player_order   
         info['public_cards'] = [i.to_dict() for i in self.public_cards]
         info['last_used_cards'] = self.last_used_cards
         info['deck'] = [i.to_dict() for i in self.deck]       # 默认玩家是无法看到牌顶的

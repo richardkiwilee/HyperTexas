@@ -16,7 +16,14 @@ from HyperTexas.game.effects import NUMBER_peek, NUMBER_SPY, NUMBER_SWITCH
 from HyperTexas.game.character import GameStatus
 
 
-test_dict = {''}
+test_dict = {'current_player_index': 0,
+            'players': [{'name': 'Player 1', 'chip': 0, 'pokers': [{}], 
+                        'hand_cards': [0x01], 'effects': [0x01], 'skill': 0x01}, 
+                        {}],
+            'public_cards': [{'id': 0, 'Number': 0, 'Color': 0, 'Material': 0, 'Wax': 0, 'change': [], 'visible': {'number': [], 'color': []}}],
+            'last_used_cards': [{}],
+            'deck': [{}],
+}
 
 def RefreshScreen(info: dict):
     pass
@@ -29,16 +36,11 @@ class Client:
         channel = grpc.insecure_channel(address + ':' + str(port))
         self.stub = rpc.LobbyStub(channel)
         # 启动一个新线程监听消息
-        self.gm = Manager()
+        self.table_info = dict()
         loginResp = self.stub.Handle(pb2.GeneralRequest(name=self.username))
         if loginResp.status != 200:
             print('Failed to login chatroom: {}'.format(loginResp.msg))
             return
-        self.gm.player_join(self.username)
-        self.gm.ready_status = json.loads(loginResp.msg)
-        for player in self.gm.ready_status:
-            if player not in self.gm.players.keys():
-                self.gm.player_join(player)
         listening = threading.Thread(target=self.__listen_for_messages, daemon=True)
         listening.start()
         input_queue = queue.Queue()
@@ -46,145 +48,76 @@ class Client:
         input_thread.daemon = True
         input_thread.start()
 
+    def isPlayer(self, s: str) -> bool:
+        """
+        检查参数是否符合玩家格式要求: p开头后跟数字
+        例如: "p1", "p2" 等
+        """
+        if not isinstance(s, str) or not s:
+            return False
+        if not s.startswith('p'):
+            return False
+        try:
+            num = int(s[1:])
+            if num < 1 or num > len(self.table_info['players']):
+                return False
+            return True
+        except ValueError:
+            return False
+
+    def isCard(self, s: str) -> bool:
+        """
+        检查参数是否符合卡牌格式要求: 玩家标识后跟.和一个字母
+        例如: "p1.a", "p2.b" 等
+        """
+        if not isinstance(s, str) or not s:
+            return False
+        parts = s.split('.')
+        if len(parts) != 2:
+            return False
+        if not self.isPlayer(parts[0]):
+            return False
+        if len(parts[1]) == 1 and parts[1].isalpha():
+            num = int(ord(parts[1].lower()) - ord('a') + 1)
+            player = self.table_info['players'][num - 1]
+            if num < 1 or num > len(player.pokers):
+                return False
+            return True
+        return False
+
+
     def add_input(self, input_queue, stub):
         while True:
             try:
-                message = input("").lower()
-                if message == 'exit':
+                _input = input("").lower()
+                parts = _input.split(' ')
+                if len(parts) > 5:
+                    print('Invalid parameter numbers')
+                    continue
+                parts += [None] * (5 - len(parts))
+                action = parts[0]
+                for arg in parts[1:]:
+                    if arg is not None:
+                        pass
+                arg1 = parts[1]
+                arg2 = parts[2]
+                arg3 = parts[3]
+                arg4 = parts[4]
+                arg5 = parts[5]
+                if action == 'exit':
                     break
-                action = message.split(' ')[0]
-                if self.gm.game_status in (GameStatus.LOBBY.value, GameStatus.ROUND_GAP.value):
-                    if action == 'cls':
-                        _ = os.system('cls')
-                        self.gm.refresh(username=self.username)
-                    if action == 'ready' or action == 'r':
-                        self.gm.accept_ready_message = True
-                        self.sendMessage(action)
-                    if action == 'start' or action == 's':
-                        self.sendMessage(action)
-                if self.gm.game_status == GameStatus.PLAYING.value:
-                    if action == 'cls':
-                        _ = os.system('cls')
-                        self.gm.refresh(username=self.username)
-                    if action == 'draw' or action == 'dr':
-                        # 从牌堆顶抽一张牌 选择操作
-                        if self.gm.turnorder.current() != self.username:
-                            print('Not your turn')
-                            continue
-                        card = Card(self.gm.draw[0])       # type: Card
-                        print(f"抽到的牌是: ", end="")
-                        card.print()
-                        while True:
-                            try:
-                                message2 = input("请选择操作[change/discard/use]: ").lower()
-                                if message2 == 'change' or message2 == 'c':
-                                    while True:
-                                        param = input("请输入要交换的牌的编号: ")
-                                        try:
-                                            my = self.gm.players[self.username]
-                                            if ',' not in param:
-                                                if 0 <= int(param) < len(my.hand):
-                                                    break
-                                            else:
-                                                flag = True
-                                                for _num in param.split(','):
-                                                    if 0 <= int(_num) < len(my.hand):
-                                                        pass
-                                                    else:
-                                                        flag = False
-                                                if flag:
-                                                    break
-                                        except Exception as ex:
-                                            print(f'输入错误: {ex}')
-                                    self.sendMessage(f'draw&change {param}')
-                                    break
-                                if message2 == 'discard' or message2 == 'd':
-                                    self.sendMessage('draw&discard')
-                                    break
-                                if message2 == 'use' or message2 == 'u':
-                                    if card.number in NUMBER_peek:
-                                        while True:
-                                            param = input("请输入要查看的牌的编号: ")
-                                            try:
-                                                my = self.gm.players[self.username]
-                                                if 0 <= int(param) < len(my.hand):
-                                                    break
-                                            except Exception as ex:
-                                                print(f'输入错误: {ex}')
-                                        self.sendMessage(f'draw&peek {param}')
-                                        break
-                                    elif card.number in NUMBER_SPY:
-                                        while True:
-                                            param = input("请输入要查看的玩家与牌的编号: ")
-                                            try:
-                                                tar = param.split(':')[0]
-                                                num = param.split(':')[1]
-                                                player = self.gm.players[tar]
-                                                if 0 <= int(num) < len(player.hand):
-                                                    break
-                                            except Exception as ex:
-                                                print(f'输入错误: {ex}')
-                                        self.sendMessage(f'draw&spy {param}')
-                                        break
-                                    elif card.number in NUMBER_SWITCH:
-                                        while True:
-                                            _param1 = input("请输入要交换的牌的编号: ")
-                                            try:
-                                                my = self.gm.players[self.username]
-                                                if 0 <= int(_param1) < len(my.hand):
-                                                    break
-                                            except Exception as ex:
-                                                print(f'输入错误: {ex}')
-                                        while True:
-                                            _param2 = input("请输入要交换的玩家与牌的编号[name:id]: ")
-                                            try:
-                                                tar = _param2.split(':')[0]
-                                                num = _param2.split(':')[1]
-                                                player = self.gm.players[tar]
-                                                if 0 <= int(num) < len(player.hand):
-                                                    break
-                                            except Exception as ex:
-                                                print(f'输入错误: {ex}')
-                                        param = f'{_param1},{_param2}'
-                                        self.sendMessage(f'draw&switch {param}')
-                                        break
-                            except KeyboardInterrupt:
-                                pass
-                    if action == 'dd':
-                        # 用弃牌堆顶的排与手牌交换
-                        if self.gm.turnorder.current() != self.username:
-                            print('Not your turn')
-                            continue
-                        if len(self.gm.discard) == 0:
-                            print('No card to draw')
-                            continue
-                        while True:
-                            index = input("请输入要交换的牌的编号: ")
-                            try:
-                                my = self.gm.players[self.username]
-                                if ',' not in index:
-                                    if 0 <= int(index) < len(my.hand):
-                                        break
-                                else:
-                                    flag = True
-                                    for num in index.split(','):
-                                        if 0 <= int(num) < len(my.hand):
-                                            pass
-                                        else:
-                                            flag = False
-                                    if flag:
-                                        break
-                            except Exception as ex:
-                                print(f'输入错误: {ex}')
-                        self.sendMessage(f'discard&draw {index}')
-                    if action == 'cabo':
-                        if self.gm.turnorder.current() != self.username:
-                            print('Not your turn')
-                            continue
-                        if self.gm.someoneCaboed():
-                            print('You can\'t cabo now')
-                            continue
-                        self.sendMessage('cabo')
+                elif action == 'ready':
+                    pass
+                elif action == 'cancel':
+                    pass
+                elif action == 'skill':
+                    pass
+                elif action == 'card':
+                    pass
+                else:
+                    print('Unknown action: {}'.format(action))
+                    continue
+                self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
             except KeyboardInterrupt:
                 pass
             except Exception as ex:
@@ -245,9 +178,15 @@ class Client:
             else:
                 print(f'Unknown message: {resp}')
 
-    def sendMessage(self, msg):
-        resp = self.stub.Handle(pb2.GeneralRequest(name=self.username, msg=msg))
+    def sendMessage(self, action, arg1, arg2, arg3, arg4, arg5):
+        msg = {
+            'action': action, 'arg1': arg1, 'arg2': arg2, 'arg3': arg3, 'arg4': arg4, 'arg5': arg5
+        }
+        resp = self.stub.Handle(pb2.GeneralRequest(sender=self.username, body=json.dumps(msg)))
+        if not resp.status:
+            pass
         print(resp.msg)
+
 
 
 def main(address='localhost', port=50051, username=None):
