@@ -1,9 +1,12 @@
 from rich.table import Table
 from rich.console import Console
+from rich.console import Group
 from rich.layout import Layout
 from rich.panel import Panel
-from rich.box import SQUARE
+from rich.box import SQUARE, DOUBLE_EDGE, Box
 from rich import box
+from rich.columns import Columns
+from rich.padding import Padding
 import os
 
 test_dict = {'status':'playing',
@@ -25,9 +28,12 @@ def create_card_slot(index: int, card_info: dict = None) -> Panel:
         color = color_map.get(card_info['Color'], '?')
         number = number_map.get(card_info['Number'], str(card_info['Number']))
         content = f"{color} {number}"
+        box_style = box.SQUARE
     else:
-        content = "[ ]"
-    return Panel(content, title=f"槽位 {index}", box=box.SQUARE, width=10, height=5)
+        content = "   "
+        # 使用DOUBLE_EDGE作为虚线边框样式
+        box_style = box.DOUBLE_EDGE
+    return Panel(content, title=f"槽位 {index}", box=box_style, width=8, height=5)
 
 def create_player_table(players: list) -> Table:
     table = Table(show_header=True, box=box.SIMPLE)
@@ -48,6 +54,7 @@ def create_player_table(players: list) -> Table:
     return table
 
 def RefreshScreen(info: dict):
+    _ = os.system('cls')
     console = Console()
     console.clear()
     console.width = 120
@@ -66,10 +73,10 @@ def RefreshScreen(info: dict):
         )
 
         # Create card slots
-        card_slots = []
+        card_slots_list = []
         for i in range(5):
             card_info = info['public_cards'][i] if i < len(info['public_cards']) else None
-            card_slots.append(create_card_slot(i + 1, card_info))
+            card_slots_list.append(create_card_slot(i + 1, card_info))
         
         # Create player table
         player_table = create_player_table(info['players'])
@@ -77,8 +84,19 @@ def RefreshScreen(info: dict):
         # Create game log
         log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)
 
+        # 创建紧密排列的卡槽组
+        card_slots_columns = Columns(
+            card_slots_list,
+            equal=True,
+            expand=False,
+            padding=(0, 1)  # 垂直padding为0，水平padding为1
+        )
+        
+        # 添加水平居中的padding
+        centered_card_slots = Padding(card_slots_columns, (1, 30))  # 上下padding为1，左右padding为30
+
         # Render layout
-        layout["top"].update(" ".join([slot.renderable for slot in card_slots]))
+        layout["top"].update(centered_card_slots)
         layout["players"].update(player_table)
         layout["log"].update(log_panel)
 
