@@ -16,8 +16,16 @@ test_dict = {'status':'playing',
                         {'name': 'Player 2', 'chip': 2000, 'pokers': [{'id': 3, 'Number': 11, 'Color': 3}, {'id': 4, 'Number': 10, 'Color': 4}], 
                         'hand_cards': [0x02], 'effects': [0x02], 'skill': "防御姿态"}],
             'public_cards': [{'id': 5, 'Number': 1, 'Color': 1}, {'id': 6, 'Number': 2, 'Color': 2}],
-            'last_used_cards': [{}],
-            'deck': [{}],
+            'last_used_cards': [
+                {'id': 7, 'Number': 7, 'Color': 1, 'player': 'Player 1'},
+                {'id': 8, 'Number': 8, 'Color': 2, 'player': 'Player 2'},
+                {'id': 9, 'Number': 9, 'Color': 3, 'player': 'Player 1'}
+            ],
+            'deck': [
+                {'id': 10, 'Number': 3, 'Color': 1},
+                {'id': 11, 'Number': 4, 'Color': 2},
+                {'id': 12, 'Number': 5, 'Color': 3}
+            ],
             'game_log': ['Player 1 使用了 红桃K', 'Player 2 使用了 方块Q']
 }
 
@@ -82,6 +90,28 @@ def create_player_table(players: list) -> Table:
     
     return table
 
+def format_card_list(cards: list, title: str, max_items: int = 3) -> Panel:
+    formatted_cards = []
+    for i, card in enumerate(cards[:max_items]):
+        if 'player' in card:  # 用于显示最后使用的卡
+            color_map = {1: '', 2: '', 3: '', 4: ''}
+            number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
+            color = color_map.get(card['Color'], '?')
+            number = number_map.get(card['Number'], str(card['Number']))
+            formatted_cards.append(f"{color}{number} by {card['player']}")
+        else:  # 用于显示抽牌堆
+            color_map = {1: '', 2: '', 3: '', 4: ''}
+            number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
+            color = color_map.get(card['Color'], '?')
+            number = number_map.get(card['Number'], str(card['Number']))
+            formatted_cards.append(f"{color}{number}")
+    
+    # 如果卡片数量不足，用空行填充
+    while len(formatted_cards) < max_items:
+        formatted_cards.append("---")
+    
+    return Panel("\n".join(formatted_cards), title=title, width=20, box=box.SQUARE)
+
 def RefreshScreen(info: dict):
     _ = os.system('cls')
     console = Console()
@@ -90,27 +120,45 @@ def RefreshScreen(info: dict):
     console.height = 40
 
     if info['status'] == 'playing':
-        # Create main layout
+        # 创建主布局：上下分割
         layout = Layout()
         layout.split(
             Layout(name="top", size=10),
             Layout(name="bottom")
         )
+        
+        # 底部分为左右两部分
         layout["bottom"].split_row(
-            Layout(name="players", ratio=2),
-            Layout(name="log", ratio=1)
+            Layout(name="left", ratio=2),
+            Layout(name="right", ratio=1)
+        )
+        
+        # 右侧继续分为上下两部分
+        layout["right"].split(
+            Layout(name="right_top", size=10),
+            Layout(name="right_bottom")
+        )
+        
+        # 右上部分继续分为左右
+        layout["right_top"].split_row(
+            Layout(name="deck_area"),
+            Layout(name="used_area")
         )
 
-        # Create card slots
+        # 创建公共牌槽
         card_slots_list = []
         for i in range(5):
             card_info = info['public_cards'][i] if i < len(info['public_cards']) else None
             card_slots_list.append(create_card_slot(i + 1, card_info))
         
-        # Create player table
+        # 创建卡组和使用记录面板
+        deck_panel = format_card_list(info['deck'], "抽牌堆顶部")
+        used_panel = format_card_list(info['last_used_cards'], "最近使用的卡")
+        
+        # 创建玩家表格
         player_table = create_player_table(info['players'])
 
-        # Create game log
+        # 创建游戏记录
         log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)
 
         # 创建紧密排列的卡槽组
@@ -124,10 +172,12 @@ def RefreshScreen(info: dict):
         # 添加水平居中的padding
         centered_card_slots = Padding(card_slots_columns, (1, 30))  # 上下padding为1，左右padding为30
 
-        # Render layout
+        # 渲染布局
         layout["top"].update(centered_card_slots)
-        layout["players"].update(player_table)
-        layout["log"].update(log_panel)
+        layout["left"].update(player_table)
+        layout["deck_area"].update(Padding(deck_panel, (0, 1)))
+        layout["used_area"].update(Padding(used_panel, (0, 1)))
+        layout["right_bottom"].update(log_panel)
 
         console.print(layout)
     elif info['status'] == 'lobby':
