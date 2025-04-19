@@ -11,11 +11,11 @@ import os
 
 test_dict = {'status':'playing',
             'current_player_index': 0,
-            'players': [{'name': 'Player 1', 'chip': 1000, 'pokers': [{'id': 1, 'Number': 13, 'Color': 1}], 
-                        'hand_cards': [0x01], 'effects': [0x01], 'skill': 0x01}, 
-                        {'name': 'Player 2', 'chip': 2000, 'pokers': [{'id': 2, 'Number': 12, 'Color': 2}], 
-                        'hand_cards': [0x02], 'effects': [0x02], 'skill': 0x02}],
-            'public_cards': [{'id': 0, 'Number': 0, 'Color': 0, 'Material': 0, 'Wax': 0, 'change': [], 'visible': {'number': [], 'color': []}}],
+            'players': [{'name': 'Player 1', 'chip': 1000, 'pokers': [{'id': 1, 'Number': 13, 'Color': 1}, {'id': 2, 'Number': 12, 'Color': 2}], 
+                        'hand_cards': [0x01], 'effects': [0x01], 'skill': "快速行动"}, 
+                        {'name': 'Player 2', 'chip': 2000, 'pokers': [{'id': 3, 'Number': 11, 'Color': 3}, {'id': 4, 'Number': 10, 'Color': 4}], 
+                        'hand_cards': [0x02], 'effects': [0x02], 'skill': "防御姿态"}],
+            'public_cards': [{'id': 5, 'Number': 1, 'Color': 1}, {'id': 6, 'Number': 2, 'Color': 2}],
             'last_used_cards': [{}],
             'deck': [{}],
             'game_log': ['Player 1 使用了 红桃K', 'Player 2 使用了 方块Q']
@@ -31,26 +31,55 @@ def create_card_slot(index: int, card_info: dict = None) -> Panel:
         box_style = box.SQUARE
     else:
         content = "   "
-        # 使用DOUBLE_EDGE作为虚线边框样式
         box_style = box.DOUBLE_EDGE
-    return Panel(content, title=f"槽位 {index}", box=box_style, width=8, height=5)
+    return Panel(content, title=f"", box=box_style, width=8, height=5)
+
+def format_poker_card(card: dict, index: int) -> str:
+    color_map = {1: '', 2: '', 3: '', 4: ''}
+    number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
+    color = color_map.get(card['Color'], '?')
+    number = number_map.get(card['Number'], str(card['Number']))
+    return f"[{index}] {color}{number}"
 
 def create_player_table(players: list) -> Table:
-    table = Table(show_header=True, box=box.SIMPLE)
-    table.add_column("编号", justify="center", style="cyan")
+    table = Table(show_header=True, box=box.SIMPLE_HEAVY)
+    table.add_column("编号", justify="center", style="cyan", no_wrap=True)
     table.add_column("名字", style="magenta")
     table.add_column("分数", justify="right", style="green")
-    table.add_column("手牌", style="yellow")
-    table.add_column("技能", style="blue")
+    table.add_column("手牌", style="yellow", width=15)
+    table.add_column("技能", style="blue", width=15)
+    
+    # 添加行分隔符
+    table.show_lines = True
     
     for i, player in enumerate(players):
+        # 格式化玩家编号
+        player_id = f"P{i + 1}"
+        
+        # 格式化手牌列表
+        poker_cards = []
+        for j, card in enumerate(player['pokers']):
+            poker_cards.append(format_poker_card(card, j + 1))
+        poker_text = "\n".join(poker_cards)
+        
+        # 格式化技能卡
+        # 假设每个玩家有2张扑克牌，所以技能卡的索引从3开始
+        skill_cards = []
+        if isinstance(player['skill'], (list, tuple)):
+            for j, skill in enumerate(player['skill']):
+                skill_cards.append(f"[{j + len(player['pokers']) + 1}] {skill}")
+        else:
+            skill_cards.append(f"[{len(player['pokers']) + 1}] {player['skill']}")
+        skill_text = "\n".join(skill_cards)
+        
         table.add_row(
-            str(i + 1),
+            player_id,
             player['name'],
             str(player['chip']),
-            str(len(player['pokers'])),
-            str(player['skill'])
+            poker_text,
+            skill_text
         )
+    
     return table
 
 def RefreshScreen(info: dict):
