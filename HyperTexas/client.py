@@ -14,19 +14,7 @@ from HyperTexas.game.manager import Manager
 from HyperTexas.game.poker import Card
 from HyperTexas.game.effects import NUMBER_peek, NUMBER_SPY, NUMBER_SWITCH
 from HyperTexas.game.character import GameStatus
-
-
-test_dict = {'current_player_index': 0,
-            'players': [{'name': 'Player 1', 'chip': 0, 'pokers': [{}], 
-                        'hand_cards': [0x01], 'effects': [0x01], 'skill': 0x01}, 
-                        {}],
-            'public_cards': [{'id': 0, 'Number': 0, 'Color': 0, 'Material': 0, 'Wax': 0, 'change': [], 'visible': {'number': [], 'color': []}}],
-            'last_used_cards': [{}],
-            'deck': [{}],
-}
-
-def RefreshScreen(info: dict):
-    pass
+from HyperTexas.game.ui import RefreshScreen
 
 
 class Client:
