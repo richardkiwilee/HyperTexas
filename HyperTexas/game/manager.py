@@ -18,6 +18,9 @@ class Manager:
         self.round_confirmations = set()  # 记录已确认结果的玩家
         self.game_status = GameStatus.LOBBY.value
 
+    def get_all_pokers(self):
+        return []
+
     def set_init_chips(self, chip):
         # 设置初始筹码数x万
         self.base_chip = chip * 10000

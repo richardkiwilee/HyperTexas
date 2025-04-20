@@ -1,636 +1,390 @@
-# 作用于计分前
-EFFECT_0x0001 = "红桃和方片视为同一花色, 黑桃和梅花视为同一花色"
-EFFECT_0x0002 = ""
-EFFECT_0x0003 = ""
-EFFECT_0x0004 = ""
-EFFECT_0x0005 = ""
-EFFECT_0x0006 = ""
-EFFECT_0x0007 = ""
-EFFECT_0x0008 = ""
-EFFECT_0x0009 = ""
-EFFECT_0x000a = ""
-EFFECT_0x000b = ""
-EFFECT_0x000c = ""
-EFFECT_0x000d = ""
-EFFECT_0x000e = ""
-EFFECT_0x000f = ""
-# 作用于计分时
-## 无条件
+import stat
+import random
+from HyperTexas.game.player import Character
+from HyperTexas.game.poker import *
+from HyperTexas.game.base_score import *
+from HyperTexas.game.manager import Manager
+EFFECT_DICT = dict()
 
-## 花色相关
-EFFECT_0x0011 = "计分时, 方片+3倍率"
-EFFECT_0x0012 = "计分时, 黑桃+3倍率"
-EFFECT_0x0013 = "计分时, 红桃+3倍率"
-EFFECT_0x0014 = "计分时, 梅花+3倍率"
-EFFECT_0x0015 = "" 
-EFFECT_0x0016 = ""
-EFFECT_0x0017 = ""
-EFFECT_0x0018 = ""
-EFFECT_0x0019 = ""
-EFFECT_0x001a = ""
-EFFECT_0x001b = ""
-EFFECT_0x001c = ""
-EFFECT_0x001d = ""
-EFFECT_0x001e = ""
-EFFECT_0x001f = ""
-
-EFFECT_0x0021 = "计分的黑桃牌给予x1.5倍率"
-EFFECT_0x0022 = "计分的红桃有1/2概率给予x1.5倍率"
-EFFECT_0x0023 = "计分的黑桃给予+50筹码"
-EFFECT_0x0024 = "计分的梅花给予+7倍率"
-EFFECT_0x0025 = "红桃无效"
-EFFECT_0x0026 = "黑桃无效"
-EFFECT_0x0027 = "梅花无效"
-EFFECT_0x0028 = "方块无效"
-EFFECT_0x0029 = ""
-EFFECT_0x002a = ""
-EFFECT_0x002b = ""
-EFFECT_0x002c = ""
-EFFECT_0x002d = ""
-EFFECT_0x002e = ""
-EFFECT_0x002f = ""
-
-## 点数筹码
-EFFECT_0x0031 = "计分时, 人头牌+30筹码"
-EFFECT_0x0032 = "计分的奇数牌+30筹码"
-EFFECT_0x0033 = ""
-EFFECT_0x0034 = ""
-EFFECT_0x0035 = ""
-EFFECT_0x0036 = ""
-EFFECT_0x0037 = ""
-EFFECT_0x0038 = ""
-EFFECT_0x0039 = ""
-EFFECT_0x003a = ""
-EFFECT_0x003b = ""
-EFFECT_0x003c = ""
-EFFECT_0x003d = ""
-EFFECT_0x003e = ""
-EFFECT_0x003f = ""
-
-## 点数倍率
-EFFECT_0x0041 = "计分时, A,2,3,5,8给予+8倍率"
-EFFECT_0x0042 = "计分的偶数牌+4倍率"
-EFFECT_0x0043 = "第一张计分的人头卡给予x2倍率"
-EFFECT_0x0044 = "人头牌在计分时+5倍率"
-EFFECT_0x0045 = "计分的K和Q给予x2倍率"
-EFFECT_0x0046 = "人头牌无效"
-EFFECT_0x0047 = ""
-EFFECT_0x0048 = ""
-EFFECT_0x0049 = ""
-EFFECT_0x004a = ""
-EFFECT_0x004b = ""
-EFFECT_0x004c = ""
-EFFECT_0x004d = ""
-EFFECT_0x004e = ""
-EFFECT_0x004f = ""
-
-## 点数筹码和倍率
-EFFECT_0x0051 = "计分的A给予+4倍率和+20筹码"
-EFFECT_0x0052 = "计分的10和4给予+10筹码和+4倍率"
-EFFECT_0x0053 = ""
-EFFECT_0x0054 = ""
-EFFECT_0x0055 = ""
-EFFECT_0x0056 = ""
-EFFECT_0x0057 = ""
-EFFECT_0x0058 = ""
-EFFECT_0x0059 = ""
-EFFECT_0x005a = ""
-EFFECT_0x005b = ""
-EFFECT_0x005c = ""
-EFFECT_0x005d = ""
-EFFECT_0x005e = ""
-EFFECT_0x005f = ""
-
-## 重复触发
-EFFECT_0x0061 = "计分时, 打出的牌触发2次"
-EFFECT_0x0062 = "重新触发打出的2,3,4,5"
-EFFECT_0x0063 = "重新触发所有打出的牌"
-EFFECT_0x0064 = "重新触发所有打出的人头牌"
-EFFECT_0x0065 = "打出的第一张记分牌触发2次"
-EFFECT_0x0066 = ""
-EFFECT_0x0067 = ""
-EFFECT_0x0068 = ""
-EFFECT_0x0069 = ""
-EFFECT_0x006a = ""
-EFFECT_0x006b = ""
-EFFECT_0x006c = ""
-EFFECT_0x006d = ""
-EFFECT_0x006e = ""
-EFFECT_0x006f = ""
-
-## 创建卡
-EFFECT_0x0071 = "打出的每一张8在计分时有1/4概率生成一张技能卡"
-EFFECT_0x0072 = "所有计分的人头卡变成黄金卡"
-EFFECT_0x0073 = ""
-EFFECT_0x0074 = ""
-EFFECT_0x0075 = ""
-EFFECT_0x0076 = ""
-EFFECT_0x0077 = ""
-EFFECT_0x0078 = ""
-EFFECT_0x0079 = ""
-EFFECT_0x007a = ""
-EFFECT_0x007b = ""
-EFFECT_0x007c = ""
-EFFECT_0x007d = ""
-EFFECT_0x007e = ""
-EFFECT_0x007f = ""
-
-# 作用于计分后
-## 无条件
-EFFECT_0x0081 = "计分时, +4倍率"
-EFFECT_0x0082 = "+100筹码"
-EFFECT_0x0083 = "1/5的概率, +20倍率"
-EFFECT_0x0084 = "+250筹码"
-EFFECT_0x0085 = "1/6的概率, +15倍率"
-EFFECT_0x0086 = ""
-EFFECT_0x0087 = ""
-EFFECT_0x0088 = ""
-EFFECT_0x0089 = ""
-EFFECT_0x008a = ""
-EFFECT_0x008b = ""
-EFFECT_0x008c = ""
-EFFECT_0x008d = ""
-EFFECT_0x008e = ""
-EFFECT_0x008f = ""
-
-## 牌型筹码
-EFFECT_0x0091 = "如果是对子牌型, +50筹码"
-EFFECT_0x0092 = "如果是三条牌型, +100筹码"
-EFFECT_0x0093 = "如果是两对牌型, +80筹码"
-EFFECT_0x0094 = "如果是顺子牌型, +100筹码"
-EFFECT_0x0095 = "如果是同花牌型, +80筹码"
-EFFECT_0x0096 = ""
-EFFECT_0x0097 = ""
-EFFECT_0x0098 = ""
-EFFECT_0x0099 = ""
-EFFECT_0x009a = ""
-EFFECT_0x009b = ""
-EFFECT_0x009c = ""
-EFFECT_0x009d = ""
-EFFECT_0x009e = ""
-EFFECT_0x009f = ""
-
-## 牌型倍率
-EFFECT_0x00a1 = "如果是对子牌型, +8倍率"
-EFFECT_0x00a2 = "如果是三条牌型, +12倍率"
-EFFECT_0x00a3 = "如果是两对牌型, +10倍率"
-EFFECT_0x00a4 = "如果是同花牌型, +10倍率"
-EFFECT_0x00a5 = "如果出牌少于3张, +20倍率"
-EFFECT_0x00a6 = "如果所有未计分牌均是黑桃或梅花, x3倍率"
-EFFECT_0x00a7 = "如果有3张计分的人头牌, +10倍率"
-EFFECT_0x00a8 = "如果记分牌中含有4种花色, x3倍率"
-EFFECT_0x00a9 = "如果牌型为两对, x2倍率"
-EFFECT_0x00aa = "如果牌型为三条, x3倍率"
-EFFECT_0x00ab = "如果牌型为四条, x4倍率"
-EFFECT_0x00ac = "如果牌型为顺子, x3倍率"
-EFFECT_0x00ad = "如果牌型为同花, x2倍率"
-EFFECT_0x00ae = "同花无效"
-EFFECT_0x00af = ""
-
-EFFECT_0x00b1 = ""
-EFFECT_0x00b2 = ""
-EFFECT_0x00b3 = ""
-EFFECT_0x00b4 = ""
-EFFECT_0x00b5 = ""
-EFFECT_0x00b6 = ""
-EFFECT_0x00b7 = ""
-EFFECT_0x00b8 = ""
-EFFECT_0x00b9 = ""
-EFFECT_0x00ba = ""
-EFFECT_0x00bb = ""
-EFFECT_0x00bc = ""
-EFFECT_0x00bd = ""
-EFFECT_0x00be = ""
-EFFECT_0x00bf = ""
-
-## 牌型升级
-EFFECT_0x00c1 = "1/4概率升级打出的牌型"
-EFFECT_0x00c2 = "给予牌型等级总和x0.1的倍率"
-EFFECT_0x00c3 = "所有牌型等级提升1级"
-EFFECT_0x00c4 = "升级打出的牌型"
-EFFECT_0x00c5 = ""
-EFFECT_0x00c6 = ""
-EFFECT_0x00c7 = ""
-EFFECT_0x00c8 = ""
-EFFECT_0x00c9 = ""
-EFFECT_0x00ca = ""
-EFFECT_0x00cb = ""
-EFFECT_0x00cc = ""
-EFFECT_0x00cd = ""
-EFFECT_0x00ce = ""
-EFFECT_0x00cf = ""
-
-EFFECT_0x00d1 = ""
-EFFECT_0x00d2 = ""
-EFFECT_0x00d3 = ""
-EFFECT_0x00d4 = ""
-EFFECT_0x00d5 = ""
-EFFECT_0x00d6 = ""
-EFFECT_0x00d7 = ""
-EFFECT_0x00d8 = ""
-EFFECT_0x00d9 = ""
-EFFECT_0x00da = ""
-EFFECT_0x00db = ""
-EFFECT_0x00dc = ""
-EFFECT_0x00dd = ""
-EFFECT_0x00de = ""
-EFFECT_0x00df = ""
-
-## 牌库筹码
-EFFECT_0x00e1 = "抽牌堆内剩余的每张牌, +2筹码"
-EFFECT_0x00e2 = "牌组内的每一张石头牌, +25筹码"
-EFFECT_0x00e3 = ""
-EFFECT_0x00e4 = ""
-EFFECT_0x00e5 = ""
-EFFECT_0x00e6 = ""
-EFFECT_0x00e7 = ""
-EFFECT_0x00e8 = ""
-EFFECT_0x00e9 = ""
-EFFECT_0x00ea = ""
-EFFECT_0x00eb = ""
-EFFECT_0x00ec = ""
-EFFECT_0x00ed = ""
-EFFECT_0x00ee = ""
-EFFECT_0x00ef = ""
-
-EFFECT_0x00f1 = ""
-EFFECT_0x00f2 = ""
-EFFECT_0x00f3 = ""
-EFFECT_0x00f4 = ""
-EFFECT_0x00f5 = ""
-EFFECT_0x00f6 = ""
-EFFECT_0x00f7 = ""
-EFFECT_0x00f8 = ""
-EFFECT_0x00f9 = ""
-EFFECT_0x00fa = ""
-EFFECT_0x00fb = ""
-EFFECT_0x00fc = ""
-EFFECT_0x00fd = ""
-EFFECT_0x00fe = ""
-EFFECT_0x00ff = ""
-
-## 牌库倍率
-EFFECT_0x0101 = "牌组中的每张钢铁牌+0.2倍率"
-EFFECT_0x0102 = "牌库内的每一张增强卡, 给予x0.1倍率"
-EFFECT_0x0103 = "超过52张的每张卡, 给予x0.25倍率"
-EFFECT_0x0104 = "比52张少的每张卡, 给予+4倍率"
-EFFECT_0x0105 = "牌库中的每一张玻璃牌给予x0.75倍率"
-EFFECT_0x0106 = "如果牌组中含有16张以上的增加牌, x3倍率"
-EFFECT_0x0107 = "少于12的每张人头牌, 给予x1倍率"
-EFFECT_0x0108 = ""
-EFFECT_0x0109 = ""
-EFFECT_0x010a = ""
-EFFECT_0x010b = ""
-EFFECT_0x010c = ""
-EFFECT_0x010d = ""
-EFFECT_0x010e = ""
-EFFECT_0x010f = ""
-
-## 未计分
-EFFECT_0x0111 = "未计分的每张K给与x1.5倍率"
-EFFECT_0x0112 = ""
-EFFECT_0x0113 = ""
-EFFECT_0x0114 = ""
-EFFECT_0x0115 = ""
-EFFECT_0x0116 = ""
-EFFECT_0x0117 = ""
-EFFECT_0x0118 = ""
-EFFECT_0x0119 = ""
-EFFECT_0x011a = ""
-EFFECT_0x011b = ""
-EFFECT_0x011c = ""
-EFFECT_0x011d = ""
-EFFECT_0x011e = ""
-EFFECT_0x011f = ""
-
-## 其他信息倍率
-EFFECT_0x0121 = "如果没有手牌, +15倍率"
-EFFECT_0x0122 = "计分时, 倍率增加未计分的最小牌点数的2倍"
-EFFECT_0x0123 = "计分时, 每一个效果+3倍率"
-EFFECT_0x0124 = "根据最后一张被使用的牌增加倍率"
-EFFECT_0x0125 = ""
-EFFECT_0x0126 = ""
-EFFECT_0x0127 = ""
-EFFECT_0x0128 = ""
-EFFECT_0x0129 = ""
-EFFECT_0x012a = ""
-EFFECT_0x012b = ""
-EFFECT_0x012c = ""
-EFFECT_0x012d = ""
-EFFECT_0x012e = ""
-EFFECT_0x012f = ""
-
-## 其他信息筹码
-EFFECT_0x0131 = "每拥有1w资金, +20筹码"
-EFFECT_0x0132 = ""
-EFFECT_0x0133 = ""
-EFFECT_0x0134 = ""
-EFFECT_0x0135 = ""
-EFFECT_0x0136 = ""
-EFFECT_0x0137 = ""
-EFFECT_0x0138 = ""
-EFFECT_0x0139 = ""
-EFFECT_0x013a = ""
-EFFECT_0x013b = ""
-EFFECT_0x013c = ""
-EFFECT_0x013d = ""
-EFFECT_0x013e = ""
-EFFECT_0x013f = ""
-
-## 概率倍率
-EFFECT_0x0141 = "1/6的概率, x4倍率"
-EFFECT_0x0142 = "会是什么效果呢?[印错小丑]"
-EFFECT_0x0143 = "每拥有1w资金, +2倍率"
-EFFECT_0x0144 = ""
-EFFECT_0x0145 = ""
-EFFECT_0x0146 = ""
-EFFECT_0x0147 = ""
-EFFECT_0x0148 = ""
-EFFECT_0x0149 = ""
-EFFECT_0x014a = ""
-EFFECT_0x014b = ""
-EFFECT_0x014c = ""
-EFFECT_0x014d = ""
-EFFECT_0x014e = ""
-EFFECT_0x014f = ""
-
-## 抽卡
-EFFECT_0x0151 = "抽5张技能卡, 计分时弃光所有卡"
-EFFECT_0x0152 = ""
-EFFECT_0x0153 = ""
-EFFECT_0x0154 = ""
-EFFECT_0x0155 = ""
-EFFECT_0x0156 = ""
-EFFECT_0x0157 = ""
-EFFECT_0x0158 = ""
-EFFECT_0x0159 = ""
-EFFECT_0x015a = ""
-EFFECT_0x015b = ""
-EFFECT_0x015c = ""
-EFFECT_0x015d = ""
-EFFECT_0x015e = ""
-EFFECT_0x015f = ""
-
-## 印卡
-EFFECT_0x0161 = "向牌组中添加一张石头牌"
-EFFECT_0x0162 = "如果出牌仅有1张牌, 复制这张卡加入牌组"
-EFFECT_0x0163 = "如果出牌包含A和顺子, 生成一张技能卡"
-EFFECT_0x0164 = "如果牌型为同花顺, 生成一张技能卡"
-EFFECT_0x0165 = "计分时, 若资金少于5w, 生成一张技能卡"
-EFFECT_0x0166 = "牌组内的每一张9生成一张技能卡"
-EFFECT_0x0167 = "生成一张技能卡"
-EFFECT_0x0168 = ""
-EFFECT_0x0169 = ""
-EFFECT_0x016a = ""
-EFFECT_0x016b = ""
-EFFECT_0x016c = ""
-EFFECT_0x016d = ""
-EFFECT_0x016e = ""
-EFFECT_0x016f = ""
-
-## 删卡
-EFFECT_0x0171 = "销毁每一张计分的6, 生成相应数量的技能卡"
-EFFECT_0x0172 = ""
-EFFECT_0x0173 = ""
-EFFECT_0x0174 = ""
-EFFECT_0x0175 = ""
-EFFECT_0x0176 = ""
-EFFECT_0x0177 = ""
-EFFECT_0x0178 = ""
-EFFECT_0x0179 = ""
-EFFECT_0x017a = ""
-EFFECT_0x017b = ""
-EFFECT_0x017c = ""
-EFFECT_0x017d = ""
-EFFECT_0x017e = ""
-EFFECT_0x017f = ""
-
-## 资金
-EFFECT_0x0181 = "牌组中的每一张黄金牌给与1w资金"
-EFFECT_0x0182 = ""
-EFFECT_0x0183 = ""
-EFFECT_0x0184 = ""
-EFFECT_0x0185 = ""
-EFFECT_0x0186 = ""
-EFFECT_0x0187 = ""
-EFFECT_0x0188 = ""
-EFFECT_0x0189 = ""
-EFFECT_0x018a = ""
-EFFECT_0x018b = ""
-EFFECT_0x018c = ""
-EFFECT_0x018d = ""
-EFFECT_0x018e = ""
-EFFECT_0x018f = ""
-
-# 牌组相关
-
-# 未计分
-EFFECT_0x0191 = "每一张未计分的Q, 给予+13倍率"
-EFFECT_0x0192 = ""
-EFFECT_0x0193 = ""
-EFFECT_0x0194 = ""
-EFFECT_0x0195 = ""
-EFFECT_0x0196 = ""
-EFFECT_0x0197 = ""
-EFFECT_0x0198 = ""
-EFFECT_0x0199 = ""
-EFFECT_0x019a = ""
-EFFECT_0x019b = ""
-EFFECT_0x019c = ""
-EFFECT_0x019d = ""
-EFFECT_0x019e = ""
-EFFECT_0x019f = ""
+CONDITIN_GOLD_BASE = 10000
+     
+EFFECT_1 = "计分时, 黑桃+3倍率"
+EFFECT_2 = "计分时, 红桃+3倍率"
+EFFECT_3 = "计分时, 梅花+3倍率"
+EFFECT_4 = "计分的黑桃牌给予x1.5倍率"
+EFFECT_5 = "计分的红桃有1/2概率给予x1.5倍率"
+EFFECT_6 = "计分的黑桃给予+50筹码"
+EFFECT_7 = "计分的梅花给予+7倍率"
+EFFECT_8 = "红桃无效"
+EFFECT_9 = "黑桃无效"
+EFFECT_10 = "梅花无效"
+EFFECT_11 = "方块无效"
+EFFECT_12 = "计分时, 人头牌+30筹码"
+EFFECT_13 = "计分的奇数牌+30筹码"
+EFFECT_14 = "计分时, A,2,3,5,8给予+8倍率"
+EFFECT_15 = "计分的偶数牌+4倍率"
+EFFECT_16 = "第一张计分的人头卡给予x2倍率"
+EFFECT_17 = "人头牌在计分时+5倍率"
+EFFECT_18 = "计分的K和Q给予x2倍率"
+EFFECT_19 = "人头牌无效"
+EFFECT_20 = "计分的A给予+4倍率和+20筹码"
+EFFECT_21 = "计分的10和4给予+10筹码和+4倍率"
+EFFECT_22 = "计分时, 打出的牌触发2次"
+EFFECT_23 = "重新触发打出的2,3,4,5"
+EFFECT_24 = "重新触发所有打出的牌"
+EFFECT_25 = "重新触发所有打出的人头牌"
+EFFECT_26 = "打出的第一张记分牌触发2次"
+EFFECT_27 = "打出的每一张8在计分时有1/4概率生成一张技能卡"
+EFFECT_28 = "所有计分的人头卡变成黄金卡"
+EFFECT_29 = "计分后, +4倍率"
+EFFECT_30 = "+100筹码"
+EFFECT_31 = "1/5的概率, +20倍率"
+EFFECT_32 = "+250筹码"
+EFFECT_33 = "1/6的概率, +15倍率"
+EFFECT_34 = "如果是对子牌型, +50筹码"
+EFFECT_35 = "如果是三条牌型, +100筹码"
+EFFECT_36 = "如果是两对牌型, +80筹码"
+EFFECT_37 = "如果是顺子牌型, +100筹码"
+EFFECT_38 = "如果是同花牌型, +80筹码"
+EFFECT_39 = "如果是对子牌型, +8倍率"
+EFFECT_40 = "如果是三条牌型, +12倍率"
+EFFECT_41 = "如果是两对牌型, +10倍率"
+EFFECT_42 = "如果是同花牌型, +10倍率"
+EFFECT_43 = "如果出牌少于3张, +20倍率"
+EFFECT_44 = "每一张计分的Q, 给予+13倍率"
+EFFECT_45 = "如果有3张计分的人头牌, +10倍率"
+EFFECT_46 = "如果牌记分牌中含有4种花色, x3倍率"
+EFFECT_47 = "如果牌型为两对, x2倍率"
+EFFECT_48 = "如果牌型为三条, x3倍率"
+EFFECT_49 = "如果牌型为四条, x4倍率"
+EFFECT_50 = "如果牌型为顺子, x3倍率"
+EFFECT_51 = "如果牌型为同花, x2倍率"
+EFFECT_52 = "同花无效"
+EFFECT_53 = "1/4概率升级打出的牌型"
+EFFECT_54  = "给予牌型等级总和x0.1的倍率"
+EFFECT_55 = "所有牌型等级提升1级"
+EFFECT_56 = "升级打出的牌型"
+EFFECT_57 = "抽牌堆内剩余的每张牌, +2筹码"
+EFFECT_58 = "抽牌堆内的每一张石头牌, +25筹码"
+EFFECT_59 = "抽牌堆中的每张钢铁牌+0.2倍率"
+EFFECT_60 = "抽牌堆中的每一张增强卡, 给予x0.1倍率"
+EFFECT_61 = "超过52张的每张卡, 给予x0.25倍率"
+EFFECT_62 = "比52张少的每张卡, 给予+4倍率"
+EFFECT_63 = "抽牌堆中的每一张玻璃牌给予x0.75倍率"
+EFFECT_64 = "如果牌组中含有16张以上的增加牌, x3倍率"
+EFFECT_65 = "少于12的每张人头牌, 给予x1倍率"
+EFFECT_66 = "未计分的每张K给与x1.5倍率"
+EFFECT_67 = "如果没有手牌, +15倍率"
+EFFECT_68 = "牌组中的每一张黄金牌给与1w资金"
+EFFECT_69 = "计分时, 每一个效果+3倍率"
+EFFECT_70 = "销毁每一张计分的6, 生成相应数量的技能卡"
+EFFECT_71 = "每拥有1w资金, +20筹码"
+EFFECT_72 = "1/6的概率, x4倍率"
+EFFECT_73 = "会是什么效果呢?[印错小丑]"
+EFFECT_74 = "每拥有1w资金, +2倍率"
+EFFECT_75 = "如果出牌仅有1张牌, 复制这张卡加入牌组"
+EFFECT_76 = "如果出牌包含A和顺子, 生成一张技能卡"
+EFFECT_77 = "如果牌型为同花顺, 生成一张技能卡"
+EFFECT_78 = "计分时, 若资金少于5w, 生成一张技能卡"
+EFFECT_79 = "牌组内的每一张9生成一张技能卡"
+EFFECT_80 = "生成一张技能卡"
 
 
-# 技能卡
-SKILL_0x01a1 = "生成本局内最后被使用的卡, 这张除外"
-SKILL_0x01a2 = "增强2张手牌为幸运卡[1/5概率+20倍率]"
-SKILL_0x01a3 = "随机提升2个牌型各1级"
-SKILL_0x01a4 = "增强2张手牌为+4倍率卡"
-SKILL_0x01a5 = "生成2张技能卡"
-SKILL_0x01a6 = "增强2张手牌为+30筹码卡"
-SKILL_0x01a7 = "增强1张手牌为万能卡[视为任何花色]"
-SKILL_0x01a8 = "增强1张手牌为钢铁卡[未计分时给予x1.5倍率]"
-SKILL_0x01a9 = "增强1张手牌为玻璃卡[x2倍率, 1/4概率计分后摧毁]"
-SKILL_0x01aa = "获得2w资金"
-SKILL_0x01ab = "1/4概率给予+50筹码, +10倍率, x1.5倍率"
-SKILL_0x01ac = "选定2张卡片, 使其点数+1"
-SKILL_0x01ad = "摧毁至多2张卡"
-SKILL_0x01ae = "选定2张卡, 将一张变为另一张"
-SKILL_0x01af = "1/5概率获得5w资金"
+def score(poker: Poker, player: Character):
+    chip = 0
+    mag = 0
+    mult = 0
+    color = poker.color
+    number = poker.Number
+    if EFFECT_19 in player.effects and number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:  # 人头无效
+        return [chip, mag, mult]
+    if color == Poker_Color_Heart:      # 红桃
+        if EFFECT_8 in player.effects:
+            return [chip, mag, mult]
+        if EFFECT_2 in player.effects:
+            mag += 3
+        if EFFECT_5 in player.effects:
+            if random.randint(1, 2) == 1:
+                mag += 1.5
+    if color == Poker_Color_Club:       # 黑桃
+        if EFFECT_9 in player.effects:
+            return [chip, mag, mult]
+        if EFFECT_1 in player.effects:
+            mag += 3
+        if EFFECT_4 in player.effects:
+            muilt += 1.5
+        if EFFECT_6 in player.effects:
+            chip += 50
+    if color == Poker_Color_Plum:       # 梅花
+        if EFFECT_10 in player.effects:
+            return [chip, mag, mult]
+        if EFFECT_3 in player.effects:
+            mag += 3
+        if EFFECT_7 in player.effects:
+            mag += 7
+    if color == Poker_Color_Diamond:    # 方块
+        if EFFECT_11 in player.effects:
+            return [chip, mag, mult]
+    if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:  # 人头牌
+        if EFFECT_12 in player.effects:
+            chip += 30
+    if EFFECT_13 in player.effects:
+        if number in [Poker_Number_A, Poker_Number_3, Poker_Number_5, Poker_Number_7, Poker_Number_9]:
+            chip += 30
+    if EFFECT_14 in player.effects:
+        if number in [Poker_Number_A, Poker_Number_2, Poker_Number_3, Poker_Number_5, Poker_Number_8]:
+            mag += 8
+    if EFFECT_15 in player.effects:
+        if number in [Poker_Number_2, Poker_Number_4, Poker_Number_6, Poker_Number_8, Poker_Number_10]:
+            mag += 4
+    if EFFECT_16 in player.effects:
+        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+            if EFFECT_16 not in player.custom_tag:
+                mult += 2
+                player.custom_tag.append(EFFECT_16)
+    if EFFECT_17 in player.effects:
+        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+            mag += 5
+    if EFFECT_18 in player.effects:
+        if number in [Poker_Number_Q, Poker_Number_K]:
+            mult += 2
+    if EFFECT_20 in player.effects and number == Poker_Number_A:
+        chip += 20
+        mag += 4
+    if EFFECT_21 in player.effects:
+        if number in [Poker_Number_10, Poker_Number_4]:
+            chip += 20
+            mag += 4
+    if EFFECT_22 in player.effects:
+        pass
+    if EFFECT_23 in player.effects:
+        pass
+    if EFFECT_24 in player.effects:
+        pass
+    if EFFECT_25 in player.effects:
+        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+            pass
+    if EFFECT_26 in player.effects:
+        pass
+    if EFFECT_27 in player.effects:
+        if number == Poker_Number_8:
+            if random.randint(1, 4) == 1:
+                pass
+    if EFFECT_28 in player.effects:
+        poker.Material = Poker_Material_Gold
+    if EFFECT_44 in player.effects:
+        if number == Poker_Number_Q:
+            mag += 13
+    return [chip, mag, mult]
 
-SKILL_0x01b1 = "增强1张手牌为黄金卡"
-SKILL_0x01b2 = "增强1张手牌为石头牌"
-SKILL_0x01b3 = "将至多3张卡牌转换为方块"
-SKILL_0x01b4 = "将至多3张卡牌转换为黑桃"
-SKILL_0x01b5 = "将至多3张卡牌转换为红桃"
-SKILL_0x01b6 = "将至多3张卡牌转换为梅花"
-SKILL_0x01b7 = "生成一个随机效果"
-SKILL_0x01b8 = "升级对子牌型1级"
-SKILL_0x01b9 = "升级两对牌型1级"
-SKILL_0x01ba = "升级三条牌型1级"
-SKILL_0x01bb = "升级同花顺牌型1级"
-SKILL_0x01bc = "升级葫芦牌型1级"
-SKILL_0x01bd = "升级高牌牌型1级"
-SKILL_0x01be = "升级四条牌型1级"
-SKILL_0x01bf = "升级五条牌型1级"
 
-SKILL_0x01c1 = "升级同花牌型1级"
-SKILL_0x01c2 = "升级同花葫芦牌型1级"
-SKILL_0x01c3 = "升级顺子牌型1级"
-SKILL_0x01c4 = "升级同花五条牌型1级"
-SKILL_0x01c5 = "随机摧毁1张手牌, 增加3张增强的人头牌到手牌"
-SKILL_0x01c6 = "随机摧毁1张手牌, 增加2张增强的A到手牌"
-SKILL_0x01c7 = "随机摧毁1张手牌, 增加4张增强的数字牌到手牌"
-SKILL_0x01c8 = "选定一张牌, 添加金色蜡封"
-SKILL_0x01c9 = "选定一张牌, 添加红色蜡封"
-SKILL_0x01ca = "选定一张牌, 添加蓝色蜡封"
-SKILL_0x01cb = "选定一张牌, 添加紫色蜡封"
-SKILL_0x01cc = "将手牌转换为同一花色"
-SKILL_0x01cd = "将手牌转换为同一点数"
-SKILL_0x01ce = "摧毁牌库5张牌, 获得2w资金"
-SKILL_0x01cf = "随机复制一个效果, 摧毁其他所有效果"
+def score_end(mgr: Manager, poker: Poker, player: Character):
+    chip = 0
+    mag = 0
+    mult = 0
+    play_type = player.played_type
+    """
+    Score_Name_No_Pair = '高牌'
+Score_Name_One_Pair = '对子'
+Score_Name_Two_Pair = '两对'
+Score_Name_Three = '三条'
+Score_Name_Straight = '顺子'
+Score_Name_Flush = '同花'
+Score_Name_Full_House = '葫芦'
+Score_Name_Four = '四条'
+Score_Name_Straight_Flush = '同花顺'
+Score_Name_Five = '五条'
+Score_Name_House_Flush = '同花葫芦'
+Score_Name_Five_Flush = '同花五条'
 
-SKILL_0x01d1 = "选定1张手牌, 生成2张它的复制"
-SKILL_0x01d2 = "为随机一张手牌添加一个蜡封"
-SKILL_0x01d3 = ""
-SKILL_0x01d4 = "查看指定2张卡"
-SKILL_0x01d5 = "查看抽牌堆顶部的3张卡"
-SKILL_0x01d6 = "将一张卡与自己的一张卡互换"
-SKILL_0x01d7 = "指定一名玩家, 视为发动他的技能"
-SKILL_0x01d8 = "抽2张卡"
-SKILL_0x01d9 = "减少指定玩家1w资金"
-SKILL_0x01da = "获得1w资金"
-SKILL_0x01db = "失去筹码时, 除你以外拥有最多筹码的玩家失去相同的筹码"
-SKILL_0x01dc = "抵消失去筹码的效果"
-SKILL_0x01dd = "如果资金低于初始资金, 补齐到初始资金"
-SKILL_0x01de = "如果破产, 恢复初始资金"
-SKILL_0x01df = "丢弃所有手牌, 抽3张牌"
-
-SKILL_0x01e1 = "立刻进入出牌阶段"
-SKILL_0x01e2 = "本轮使用卡牌无需消耗资金, 你可以再使用一张技能卡"
-SKILL_0x01e3 = "从指定玩家手里偷取1张卡"
-SKILL_0x01e4 = "下一回合, 所有人无法使用卡牌"
-SKILL_0x01e5 = "支付所有玩家1k资金, 结束此轮"
-SKILL_0x01e6 = "本轮无法出牌, 计分视为场上最高资金与自己资金的差"
-SKILL_0x01e7 = "计分结束后, 获得本轮损失的资金"
-SKILL_0x01e8 = "无法出牌, 视为打出5张A或2"
-SKILL_0x01e9 = "如果此轮获胜, 夺取的资金增加50%"
-SKILL_0x01ea = "移除所有的效果"
-SKILL_0x01eb = "丢弃指定玩家1张手牌"
-SKILL_0x01ec = "丢弃所有其他玩家1张手牌"
-SKILL_0x01ed = "减少所有其他玩家1w资金"
-SKILL_0x01ee = "跳过其他玩家的下一回合"
-SKILL_0x01ef = "与指定玩家交换手牌"
-
-SKILL_0x01f1 = "指定玩家支付5w资金, 如果他有技能卡, 改为丢弃所有技能卡"
-SKILL_0x01f2 = "反转所有玩家的手牌"
-SKILL_0x01f3 = "丢弃所有手牌, 每张丢弃的手牌获得1w资金"
-SKILL_0x01f4 = "随机玩家损失2w资金"
-SKILL_0x01f5 = "所有玩家无法使用卡牌"
-SKILL_0x01f6 = "所有玩家的手牌重新分配, 张数不变"
-SKILL_0x01f7 = "所有玩家的效果重新分配, 个数不变"
-SKILL_0x01f8 = "所有角色获得5w资金"
-SKILL_0x01f9 = "发牌员参与出牌, 目标计分为1w"
-SKILL_0x01fa = "所有玩家的资金变成5w"
-SKILL_0x01fb = "除你以外的玩家抽牌到手牌上限, 每张抽牌支付1w资金"
-SKILL_0x01fc = "从其他玩家手里随机发动一张技能卡, 无需支付资金"
-SKILL_0x01fd = "所有玩家手牌送回牌堆"
-SKILL_0x01fe = "丢弃场上的所有效果, 每损失一个效果, 玩家支付1w资金"
-SKILL_0x01ff = "本轮所有玩家计分为0"
-
-SKILL_0x0201 = "回合开始时, 随机1名玩家支付1w资金"
-SKILL_0x0202 = "回合开始时支付1w资金, 使用这张卡会将这张卡送到一名随机其他玩家手牌中"
-SKILL_0x0203 = "持有这张卡时, 抽到的牌会尽可能变成A~7"
-SKILL_0x0204 = ""
-SKILL_0x0205 = ""
-SKILL_0x0206 = ""
-SKILL_0x0207 = "轮次开始前可发动, 本轮抽到的牌为6"
-SKILL_0x0208 = "轮次开始前可发动, 抽2张牌"
-SKILL_0x0209 = "指定玩家支付2w资金"
-SKILL_0x020a = "计分时, 平衡筹码和倍率"
-SKILL_0x020b = "本轮不会损失资金"
-SKILL_0x020c = "将最多3张卡变成5"
-SKILL_0x020d = "指定一名玩家下回合无法使用技能卡"
-SKILL_0x020e = "无法被其他玩家选定为目标"
-SKILL_0x020f = "随机一名其他玩家支付1w, 发动次数为你的手牌数"
-
-SKILL_0x0211 = "所有玩家获得2w资金"
-SKILL_0x0212 = "生成2张技能卡, 本回合可再使用一张卡"
-SKILL_0x0213 = "将弃牌堆的最后2张加入手牌"
-SKILL_0x0214 = "免疫因效果造成的支付效果"
-SKILL_0x0215 = "抽取3张技能卡, 本回合可再使用3张卡, 但需要支付双倍成本"
-SKILL_0x0216 = "手牌点数翻倍"
-SKILL_0x0217 = "手牌点数+2"
-SKILL_0x0218 = "合计为7的点数加到随机卡牌"
-SKILL_0x0219 = "如果失败, 所有其他玩家额外支付相同的资金"
-SKILL_0x021a = "消耗至多10w资金, 每消耗1w资金, +100筹码, 给予x1倍率"
-SKILL_0x021b = "随机一名玩家支付5w资金"
-SKILL_0x021c = "所有玩家抽牌到手牌上限, 获得抽牌总数*1w的资金"
-SKILL_0x021d = "所有其他玩家的手牌变成2"
-SKILL_0x021e = "除你以外的玩家抽一张牌然后弃一张牌, 再反转手牌"
-SKILL_0x021f = "底注+1k"
-
-SKILL_0x0221 = "底注+2k"
-SKILL_0x0222 = "底注+5k"
-SKILL_0x0223 = "底注+1w"
-SKILL_0x0224 = "仅在公共牌为4张时可用,选择一张牌, 如果可能, 它将是第5张公共牌"
-SKILL_0x0225 = ""
-SKILL_0x0226 = ""
-SKILL_0x0227 = ""
-SKILL_0x0228 = ""
-SKILL_0x0229 = ""
-SKILL_0x022a = ""
-SKILL_0x022b = ""
-SKILL_0x022c = ""
-SKILL_0x022d = ""
-SKILL_0x022e = ""
-SKILL_0x022f = ""
-
-SKILL_0x0231 = ""
-SKILL_0x0232 = ""
-SKILL_0x0233 = ""
-SKILL_0x0234 = ""
-SKILL_0x0235 = ""
-SKILL_0x0236 = ""
-SKILL_0x0237 = ""
-SKILL_0x0238 = ""
-SKILL_0x0239 = ""
-SKILL_0x023a = ""
-SKILL_0x023b = ""
-SKILL_0x023c = ""
-SKILL_0x023d = ""
-SKILL_0x023e = ""
-SKILL_0x023f = ""
-
-SKILL_0x0241 = ""
-SKILL_0x0242 = ""
-SKILL_0x0243 = ""
-SKILL_0x0244 = ""
-SKILL_0x0245 = ""
-SKILL_0x0246 = ""
-SKILL_0x0247 = ""
-SKILL_0x0248 = ""
-SKILL_0x0249 = ""
-SKILL_0x024a = ""
-SKILL_0x024b = ""
-SKILL_0x024c = ""
-SKILL_0x024d = ""
-SKILL_0x024e = ""
-SKILL_0x024f = ""
-
-SKILL_0x0251 = ""
-SKILL_0x0252 = ""
-SKILL_0x0253 = ""
-SKILL_0x0254 = ""
-SKILL_0x0255 = ""
-SKILL_0x0256 = ""
-SKILL_0x0257 = ""
-SKILL_0x0258 = ""
-SKILL_0x0259 = ""
-SKILL_0x025a = ""
-SKILL_0x025b = ""
-SKILL_0x025c = ""
-SKILL_0x025d = ""
-SKILL_0x025e = ""
-
+    """
+    if EFFECT_52 in player.effects and player_type == Score_Name_Flush:
+        mult -= 9999
+    if EFFECT_29 in player.effects:
+        mag += 4
+    if EFFECT_30 in player.effects:
+        chip += 100
+    if EFFECT_31 in player.effects:
+        if random.randint(1, 5) == 1:
+            mag += 20
+    if EFFECT_32 in player.effects:
+        chip += 250
+    if EFFECT_33 in player.effects:
+        if random.randint(1, 6) == 1:
+            mag += 15
+    if EFFECT_34 in player.effects:
+        if poker.Type == Poker_Type_Double:
+            chip += 50
+    if EFEFECT_34 in player.effects and play_type == Score_Name_One_Pair:
+        chip += 50
+    if EFFECT_35 in player.effects and play_type == Score_Name_Three:
+        chip += 100
+    if EFFECT_36 in player.effects and play_type == Score_Name_Two_Pair:
+        chip += 80
+    if EFFECT_37 in player.effects and play_type == Score_Name_Straight:
+        chip += 100
+    if EFFECT_38 in player.effects and play_type == Score_Name_Flush:
+        chip += 80
+    if EFFECT_39 in player.effects and play_type == Score_Name_One_Pair:
+        mag += 8
+    if EFFECT_40 in player.effects and play_type == Score_Name_Three:
+        mag += 12
+    if EFFECT_41 in player.effects and play_type == Score_Name_Two_Pair:
+        mag += 10
+    if EFFECT_42 in player.effects and play_type == Score_Name_Flush:
+        mag += 10
+    if EFFECT_43 in player.effects and len(player.poker_play) <= 3:
+        mag += 20
+    if EFFECT_45 in player.effects:
+        cnt = 0
+        for card in player.poker_scored:
+            if card.Number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+                cnt += 1
+        if cnt >= 3:
+            mag += 10
+    if EFFECT_46 in player.effects:
+        cnt = [0, 0, 0, 0]
+        for card in player.poker_scored:
+            if card.color == Poker_Color_Heart:
+                cnt[0] = 1
+            if card.color == Poker_Color_Club:
+                cnt[1] = 1
+            if card.color == Poker_Color_Diamond:
+                cnt[2] = 1
+            if card.color == Poker_Color_Plum:
+                cnt[3] = 1
+        if sum(cnt) == 4:
+            mult += 3
+    if EFFECT_47 in player.effects and play_type == Score_Name_Two_Pair:
+        mult += 2
+    if EFFECT_48 in player.effects and play_type == Score_Name_Three:
+        mult += 3
+    if EFFECT_49 in player.effects and play_type == Score_Name_Four:
+        mult += 4
+    if EFFECT_50 in player.effects and play_type == Score_Name_Straight:
+        mult += 3
+    if EFFECT_51 in player.effects and play_type == Score_Name_Flush:
+        mult += 2
+    if EFFECT_53 in player.effects:
+        if random.randint(1, 4) == 1:
+            player.level[play_type] += 1
+    if EFFECT_54 in player.effects:
+        mag += sum(player.level.values()) * 0.1
+    if EFFECT_55 in player.effects:
+        for k, v in player.level:
+            player.level[k] += 1
+    if EFFECT_56 in player.effects:
+        player.level[play_type] += 1
+    if EFFECT_57 in player.effects:
+        chip += 2 * len(mgr.deck.cards)
+    if EFFECT_58 in player.effects:
+        cnt = 0
+        for card in mgr.deck.cards:
+            if card.Material == Poker_Material_Stone:
+                cnt += 1
+        chip += 25 * cnt
+    if EFFECT_59 in player.effects:
+        cnt = 0
+        for card in mgr.deck.cards:
+            if card.Material == Poker_Material_Iron:
+                cnt += 1
+        mag += 0.2 * cnt
+    if EFFECT_60 in player.effects:
+        cnt = 0
+        for card in mgr.deck.cards:
+            if card.Material in [Poker_Material_Universal, Poker_Material_Gold, Poker_Material_Glass, Poker_Material_Iron, Poker_Material_Stone, Poker_Material_Lucky, Poker_Material_Chip, Poker_Material_Magnification]:
+                cnt += 1
+        mult += 0.1 * cnt
+    if EFFECT_61 in player.effects:
+        if len(mgr.get_all_pokers()) > 52:
+            mult += 0.25 * (len(mgr.get_all_pokers()) - 52)
+    if EFFECT_62 in player.effects:
+        if len(mgr.get_all_pokers()) < 52:
+            mag += 4 * (52 - len(mgr.get_all_pokers()))
+    if EFFECT_63 in player.effects:
+        cnt = 0
+        for card in mgr.get_all_pokers():
+            if card.Material == Poker_Material_Glass:
+                cnt += 1
+        mult += cnt * 0.75
+    if EFFECT_64 in player.effects:
+        cnt = 0
+        for card in mgr.get_all_pokers():
+            if card.Material is not None:
+                cnt += 1
+        if cnt > 16:
+            mult += 3
+    if EFFECT_65 in player.effects:
+        cnt = 0
+        for card in mgr.get_all_pokers():
+            if card.Number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+                cnt += 1
+        if cnt < 12:
+            mult += cnt * 1
+    if EFFECT_66 in player.effects:
+        cnt = 0
+        for card in player.poker_unscored:
+            if card.number == Poker_Number_K:
+                cnt += 1
+        mult += cnt * 1.5
+    if EFFECT_67 in player.effects:
+        if len(player.poker_unscored) == 0:
+            mg += 15
+    if EFFECT_68 in player.effects:
+        cnt = 0
+        for card in mgr.get_all_pokers():
+            if card.Material == Poker_Material_Gold:
+                cnt += 1
+        player.gold += cnt * CONDITIN_GOLD_BASE
+    if EFFECT_69 in player.effects:
+        mag += 3 * len(player.effects)
+    if EFFECT_70 in player.effects:
+        cnt = 0
+        for card in mgr.get_all_pokers():
+            if card.Number == Poker_Number_6:
+                cnt += 1
+        if cnt < 4:
+            for i in range(0, cnt):
+                pass
+    if EFFECT_71 in player.effects:
+        cnt = player.gold // CONDITIN_GOLD_BASE
+        chip += cnt * 20
+    if EFFECT_72 in player.effects:
+        if random.randint(1, 6) == 1:
+            mult += 4
+    if EFFECT_73 in player.effects:
+        pass
+    if EFFECT_74 in player.effects:
+        cnt = player.gold // CONDITIN_GOLD_BASE
+        mag += 2 * cnt
+    if EFFECT_75 in player.effects:
+        if len(player.poker_play) == 1:
+            card = player.poker_play[0]
+            tmp = Poker()
+            tmp.Color = card.Color
+            tmp.Number = card.Number
+            tmp.Material = card.Material
+            tmp.Wax = card.Wax
+            mgr.deck.Add(tmp)
+    if EFFECT_76 in player.effects:
+        if play_type == Score_Name_Straight:
+            for card in player.poker_scored:
+                if card.number == Poker_Number_A:
+                    pass
+                    break
+    if EFFECT_77 in player.effects:
+        if play_type == Score_Name_Straight_Flush:
+            pass
+    if EFFECT_78 in player.effects:
+        if player.gold < 5 * CONDITIN_GOLD_BASE:
+            pass
+    if EFFECT_79 in player.effects:
+        cnt = 0
+        for card in mgr.get_all_pokers():
+            if card.number == Poker_Number_9:
+                cnt += 1
+        for i in range(0, cnt):
+            pass
+    if EFFECT_80:
+        pass
+    return [chip, mag, mult]

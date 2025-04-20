@@ -28,7 +28,9 @@ class Character:
         self.chip = 0
         self.mag = 0
         self.played_type = None
-
+        self.custom_tag = []
+        self.poker_scored = []
+        self.poker_unscored = []
     def OnGameStart(self):
         pass
 
