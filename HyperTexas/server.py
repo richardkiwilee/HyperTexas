@@ -23,7 +23,7 @@ class LobbyServicer(rpc.LobbyServicer):
         self.gm = Manager()
         self.gm.game_status = GameStatus.LOBBY.value
         self.host = None
-        self.users = set()
+        self.users = dict()
         self.seq = 0
         self.player_timers = {}  # 存储玩家操作的定时器
         self.timeout_duration = 60  # 超时时间（秒）
@@ -32,14 +32,7 @@ class LobbyServicer(rpc.LobbyServicer):
         """处理玩家操作超时"""
         if player_name in self.player_timers:
             del self.player_timers[player_name]
-            self._broadcast(
-                msgtype=BroadcastType.TIMEOUT.value,
-                sender='__SYSTEM__',
-                body=json.dumps({
-                    'type': 'timeout',
-                    'player': player_name
-                })
-            )
+            self._broadcast()
             # 这里可以添加默认的超时处理逻辑，比如跳过该玩家的操作
 
     def _start_player_timer(self, player_name):
@@ -61,34 +54,34 @@ class LobbyServicer(rpc.LobbyServicer):
         body = json.loads(request.body)
         if self.gm.game_status == GameStatus.LOBBY.value:
             if body['action'] == LobbyAction.LOGIN.value:
-                username = body['username']
+                username = body['arg1']
                 if len(self.users) == 0:
                     self.host = username
                 if username not in self.users:
-                    self.users.add(username)
-                    self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({}))                    
+                    self.users[username] = dict()
+                    self._broadcast() 
                     return self._response(1, 200, json.dumps('Login'))
             if body['action'] == LobbyAction.LOGOUT.value:
-                self.users.remove(username)
-                self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({}))
+                self.users.pop(username)
+                self._broadcast()
                 return self._response(1, 200, json.dumps('Logout'))
             if body['action'] == LobbyAction.READY.value:
-                self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({}))
+                self._broadcast()
                 return self._response(1, 200, json.dumps('Ready'))
             if body['action'] == LobbyAction.CANCEL.value:
-                self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({}))
+                self._broadcast()
                 return self._response(1, 200, json.dumps('Cancel Ready'))
             if body['action'] == LobbyAction.START_GAME.value:
                 # 设置游戏状态为回合开始
                 self.gm.game_status = GameStatus.ROUND_START.value
-                self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({}))
+                self._broadcast()
                 # 洗牌
                 self.gm.deck.shuffle()
                 # 随机排序玩家位置
                 self.gm.active_players = list(self.character_dict.values())
                 random.shuffle(self.gm.active_players)
-                self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({'PlayerOrder': [p.name for p in self.gm.active_players]}))
-                self._broadcast(msgtype=1, status=200, sender='', body=json.dumps({'CurrentPlayer': self.gm.active_players[0].name}))
+                self._broadcast()
+                self._broadcast()
                 # 设置游戏状态为发牌前
                 self.gm.game_status = GameStatus.BEFORE_GIVE_PLAYER_CARDS.value
                 # 检查每个玩家的发牌前可选操作
@@ -101,24 +94,14 @@ class LobbyServicer(rpc.LobbyServicer):
                             'type': 'pre_deal_options',
                             'options': player.get_pre_deal_options()  # 获取可选操作列表
                         }
-                        self._broadcast(
-                            msgtype=2,  # 假设2是询问消息类型
-                            status=200,
-                            sender=player.name,
-                            body=json.dumps(options_msg)
-                        )
+                        self._broadcast()
                 
                 # 广播游戏开始消息
                 start_msg = {
                     'type': 'game_start',
                     'player_order': [p.name for p in self.gm.active_players]
                 }
-                self._broadcast(
-                    msgtype=1,
-                    status=200,
-                    sender='',
-                    body=json.dumps(start_msg)
-                )
+                self._broadcast()
                 
                 return self._response(1, 200, json.dumps(start_msg))
             if body['action'] == LobbyAction.KICK.value:
@@ -129,12 +112,7 @@ class LobbyServicer(rpc.LobbyServicer):
                 'type': 'round_start',
                 'player_order': [p.name for p in self.gm.active_players]
             }
-            self._broadcast(
-                msgtype=BroadcastType.UPDATE_STATUS.value,
-                status=200,
-                sender='__SYSTEM__',
-                body=json.dumps(round_start_msg)
-            )
+            self._broadcast()
             # 进入发牌前阶段
             self.gm.game_status = GameStatus.BEFORE_GIVE_PLAYER_CARDS.value
             return self._response(1, 200, json.dumps('Round started'))
@@ -152,25 +130,11 @@ class LobbyServicer(rpc.LobbyServicer):
             # 发底牌给当前玩家
             self.gm.deal_to_player(current_player.name)
             # 广播玩家获得底牌的消息（不包含具体牌面）
-            self._broadcast(
-                msgtype=BroadcastType.UPDATE_STATUS.value,
-                status=200,
-                sender='__SYSTEM__',
-                body=json.dumps({
-                    'type': 'dealt_cards',
-                    'player': current_player.name
-                })
-            )
-
+            self._broadcast()
             # 移动到下一个玩家
             next_player = self.gm.next_player()
             if next_player:
-                self._broadcast(
-                    msgtype=BroadcastType.SET_CURRENT_PLAYER.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({'current_player': next_player.name})
-                )
+                self._broadcast()
             else:
                 # 所有玩家都已获得底牌，进入下一阶段
                 self.gm.game_status = GameStatus.BEFORE_PUBLIC_CARDS_3.value
@@ -190,24 +154,11 @@ class LobbyServicer(rpc.LobbyServicer):
             # 移动到下一个玩家
             next_player = self.gm.next_player()
             if next_player:
-                self._broadcast(
-                    msgtype=BroadcastType.SET_CURRENT_PLAYER.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({'current_player': next_player.name})
-                )
+                self._broadcast()
             else:
                 # 所有玩家都已完成操作，发3张公共牌
                 public_cards = self.gm.deal_public_cards(3)
-                self._broadcast(
-                    msgtype=BroadcastType.UPDATE_STATUS.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({
-                        'type': 'public_cards',
-                        'cards': public_cards
-                    })
-                )
+                self._broadcast()
                 # 进入下一阶段
                 self.gm.game_status = GameStatus.BEFORE_PUBLIC_CARDS_4.value
 
@@ -226,24 +177,11 @@ class LobbyServicer(rpc.LobbyServicer):
             # 移动到下一个玩家
             next_player = self.gm.next_player()
             if next_player:
-                self._broadcast(
-                    msgtype=BroadcastType.SET_CURRENT_PLAYER.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({'current_player': next_player.name})
-                )
+                self._broadcast()
             else:
                 # 所有玩家都已完成操作，发第4张公共牌
                 public_cards = self.gm.deal_public_cards(1)
-                self._broadcast(
-                    msgtype=BroadcastType.UPDATE_STATUS.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({
-                        'type': 'public_cards',
-                        'cards': public_cards
-                    })
-                )
+                self._broadcast()
                 # 进入下一阶段
                 self.gm.game_status = GameStatus.BEFORE_PUBLIC_CARDS_5.value
 
@@ -262,24 +200,11 @@ class LobbyServicer(rpc.LobbyServicer):
             # 移动到下一个玩家
             next_player = self.gm.next_player()
             if next_player:
-                self._broadcast(
-                    msgtype=BroadcastType.SET_CURRENT_PLAYER.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({'current_player': next_player.name})
-                )
+                self._broadcast()
             else:
                 # 所有玩家都已完成操作，发第5张公共牌
                 public_cards = self.gm.deal_public_cards(1)
-                self._broadcast(
-                    msgtype=BroadcastType.UPDATE_STATUS.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({
-                        'type': 'public_cards',
-                        'cards': public_cards
-                    })
-                )
+                self._broadcast()
                 # 进入下一阶段
                 self.gm.game_status = GameStatus.BEFORE_OPEN.value
 
@@ -298,21 +223,11 @@ class LobbyServicer(rpc.LobbyServicer):
             # 移动到下一个玩家
             next_player = self.gm.next_player()
             if next_player:
-                self._broadcast(
-                    msgtype=BroadcastType.SET_CURRENT_PLAYER.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({'current_player': next_player.name})
-                )
+                self._broadcast()
             else:
                 # 所有玩家都已完成操作，进入开牌阶段
                 self.gm.game_status = GameStatus.COLLECT_DEAL.value
-                self._broadcast(
-                    msgtype=BroadcastType.UPDATE_STATUS.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({'type': 'open_phase'})
-                )
+                self._broadcast()
 
             return self._response(1, 200, json.dumps('Action processed'))
 
@@ -328,16 +243,7 @@ class LobbyServicer(rpc.LobbyServicer):
                 return self._response(1, 400, json.dumps('Invalid cards'))
             
             # 广播玩家的出牌信息
-            self._broadcast(
-                msgtype=BroadcastType.CONFIRM_ACTION.value,
-                status=200,
-                sender=player_name,
-                body=json.dumps({
-                    'action': 'deal',
-                    'player': player_name,
-                    'cards': body['cards']
-                })
-            )
+            self._broadcast()
             
             # 检查是否所有玩家都已出牌
             if self.gm.all_players_dealt():
@@ -346,15 +252,7 @@ class LobbyServicer(rpc.LobbyServicer):
                 # 计算本回合结果
                 round_result = self.gm.calculate_round_result()
                 # 广播回合结果
-                self._broadcast(
-                    msgtype=BroadcastType.UPDATE_STATUS.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({
-                        'type': 'round_end',
-                        'result': round_result
-                    })
-                )
+                self._broadcast()
                 return self._response(1, 200, json.dumps('Round ended'))
             else:
                 # 还有玩家未出牌
@@ -369,12 +267,7 @@ class LobbyServicer(rpc.LobbyServicer):
             if self.gm.confirm_round_result(request.name):
                 # 所有玩家都已确认，开始新的一轮
                 self.gm.start_new_round()
-                self._broadcast(
-                    msgtype=BroadcastType.UPDATE_STATUS.value,
-                    status=200,
-                    sender='__SYSTEM__',
-                    body=json.dumps({'type': 'new_round'})
-                )
+                self._broadcast()
             return self._response(1, 200, json.dumps('Result confirmed'))
 
         if self.gm.game_status == GameStatus.GAME_END.value:
@@ -383,57 +276,69 @@ class LobbyServicer(rpc.LobbyServicer):
                 'type': 'game_end',
                 'final_scores': {p.name: p.score for p in self.gm.active_players}
             }
-            self._broadcast(
-                msgtype=BroadcastType.UPDATE_STATUS.value,
-                status=200,
-                sender='__SYSTEM__',
-                body=json.dumps(final_result)
-            )
+            self._broadcast()
             # 回到大厅状态
             self.gm.game_status = GameStatus.LOBBY.value
             return self._response(1, 200, json.dumps('Game ended'))
         
     def Subscribe(self, request, context):
-        if not self._isAuthorized(request):
-            return pb2.Broadcast()
+        """
+        Handle client subscription to game state updates
+        """
+        # Create a queue for this client's messages
+        message_queue = queue.Queue()
+        
+        # Add the client to our users with their stream queue
+        if request.sender not in self.users:
+            self.users[request.sender] = {'name': request.sender, 'stream': message_queue}
+        else:
+            self.users[request.sender]['stream'] = message_queue
+            
+        # Send initial game state
+        self._broadcast()
+        
+        try:
+            while True:
+                # Wait for messages in the queue
+                message = message_queue.get()
+                if message is None:  # Check for termination signal
+                    break
+                yield message
+        except Exception as e:
+            print(f"Error in subscription stream for {request.sender}: {e}")
+        finally:
+            # Cleanup when client disconnects
+            if request.sender in self.users:
+                if 'stream' in self.users[request.sender]:
+                    del self.users[request.sender]['stream']
+                self.gm.player_exit(request.sender)
 
-        if request.name in self.users:
-            return pb2.Broadcast(type=pb2.Broadcast.FAILURE, msg='Already subscribed')
+    def _response(self, msgtype, status, body):
+        return pb2.GeneralResponse(sequence=0, msgtype=msgtype, status=status, sender='__SERVER__', body=body)
 
-        cb_added = context.add_callback(self._onDisconnectWrapper(request, context))
+    def Broadcast(self, info):
+        return pb2.Broadcast(sequence=self.seq, msgtype=200, 
+                            status=200, sender='SYSTEM',
+                            body=json.dumps(info))
 
-        if not cb_added:
-            # print('Warning: disconnection will not be called')
-            pass
-
-        q = queue.Queue()
-        self.queues.append(q)
-        self.users[request.name]['stream'] = q
-        yield pb2.Broadcast(type=pb2.Broadcast.UNSPECIFIED)
-
-        while True:
-            q = self.users[request.name]['stream']
-            obj = q.get()
-            if obj is None:
-                yield pb2.Broadcast(type=pb2.Broadcast.FAILURE, msg='The server is shutting down')
-                return
-            yield pb2.Broadcast(**obj)
-            q.task_done()
-
-    def _response(self, msgtpye, status, body):
-        return pb2.GeneralResponse(sequence=0, type=msgtpye, status=status, sender='__SERVER__', body=body)
-
-    def _broadcast(self, msgtype, status, sender, body):
+    def _broadcast(self):
         self.seq += 1
-        _obj = {'sequence': self.seq, 'type': msgtype, 'status': status, 'sender': sender, 'body': body}
-        for _, user in self.users.items():
-            if 'stream' in user:
-                user['stream'].put(_obj)
+        game_state = self.gm.game_status  # Assuming this method exists to get current game state
+        _obj = pb2.Broadcast(
+            sequence=self.seq,
+            msgtype=0,
+            status=200,
+            sender='__SYSTEM__',
+            body=json.dumps(game_state)
+        )
+        for user in self.users:
+            if 'stream' in self.users[user]:
+                self.users[user]['stream'].put(_obj)
 
     def _onDisconnectWrapper(self, request, context):
         def callback():
             curUser = request.name
-            self._broadcast(msgtype=0, status=200, sender='', body=json.dumps({}))
+            self._broadcast()
             del curUser['stream']
             self.gm.player_exit(curUser['name'])
         return callback

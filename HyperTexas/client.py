@@ -8,6 +8,7 @@ import string
 import argparse
 import json
 import os
+from HyperTexas.game.enum import LobbyAction
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
 from HyperTexas.game.manager import Manager
@@ -26,7 +27,7 @@ class Client:
         self.stub = rpc.LobbyStub(channel)
         # 启动一个新线程监听消息
         self.table_info = dict()
-        loginResp = self.stub.Handle(pb2.GeneralRequest(name=self.username))
+        loginResp = self.sendMessage(LobbyAction.LOGIN.value, self.username)
         if loginResp.status != 200:
             print('Failed to login chatroom: {}'.format(loginResp.msg))
             return
@@ -167,7 +168,7 @@ class Client:
             else:
                 print(f'Unknown message: {resp}')
 
-    def sendMessage(self, action, arg1, arg2, arg3, arg4, arg5):
+    def sendMessage(self, action, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         msg = {
             'action': action, 'arg1': arg1, 'arg2': arg2, 'arg3': arg3, 'arg4': arg4, 'arg5': arg5
         }
