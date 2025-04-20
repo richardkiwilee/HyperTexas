@@ -51,7 +51,7 @@ class Poker:
         # 可见性 仅记录数字和花色. 材质和蜡封对所有人可见
         self.visible = {'number': [], 'color': []}
 
-    def __init__(self, info: dict):
+    def from_dict(self, info: dict):
         self.id = info['id']
         self.Number = info['Number']      # 数字
         self.Color = info['Color']       # 花色

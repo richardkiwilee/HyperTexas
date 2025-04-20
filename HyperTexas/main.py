@@ -1,5 +1,5 @@
-from cabo.server import serve
-from cabo.client import main
+from HyperTexas.server import server
+from HyperTexas.client import main
 import threading
 
 
@@ -18,7 +18,7 @@ if __name__ == '__main__':
                         break
                     except Exception as ex:
                         print(f'输入错误: {ex}')
-            server_thread = threading.Thread(target=serve, args=(_,))
+            server_thread = threading.Thread(target=server, args=(_,))
             server_thread.start()
             while True:
                 try:
@@ -27,7 +27,7 @@ if __name__ == '__main__':
                         try:
                             main('localhost', _, username)
                         except Exception as ex:
-                            pass
+                            print(f'{ex}')
                 except Exception as ex:
                     pass
         elif _.lower() == 'join':

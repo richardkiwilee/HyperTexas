@@ -1,4 +1,4 @@
-from .base_score import *
+from HyperTexas.game.base_score import *
 
 class Character:
     def __init__(self):

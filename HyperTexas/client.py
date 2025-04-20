@@ -11,9 +11,10 @@ import os
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
 from HyperTexas.game.manager import Manager
-from HyperTexas.game.poker import Card
-from HyperTexas.game.effects import NUMBER_peek, NUMBER_SPY, NUMBER_SWITCH
-from HyperTexas.game.character import GameStatus
+from HyperTexas.game.poker import Poker
+from HyperTexas.game.card import Card
+from HyperTexas.game.effects import *
+from HyperTexas.game.character import Character
 from HyperTexas.game.ui import RefreshScreen
 
 

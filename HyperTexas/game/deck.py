@@ -1,5 +1,6 @@
-from .poker import Poker, Poker_Colors, Poker_Numbers
-from .card import Card
+from HyperTexas.game.poker import Poker, Poker_Colors, Poker_Numbers
+from HyperTexas.game.card import Card
+import random
 
 class Deck:
     def __init__(self):

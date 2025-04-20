@@ -1,5 +1,10 @@
-from .deck import Deck, ConsumeDeck
-from .character import *
+from typing import List, Set, Dict, Any, Optional
+from HyperTexas.game.deck import Deck, ConsumeDeck
+from HyperTexas.game.character import *
+from HyperTexas.game.poker import *
+import random
+from HyperTexas.game.enum import *
+
 
 class Manager:
     def __init__(self):
@@ -15,24 +20,25 @@ class Manager:
         self.level = 1      # 每个回合 输的人要额外支付level * 1k的底注
         self.player_deals = {}  # 记录玩家的出牌
         self.current_player_index = 0  # 当前操作玩家的索引
-        self.round_confirmations = set()  # 记录已确认结果的玩家
+        self.round_confirmations = set()  # type: Set[Any]  # 记录已确认结果的玩家
         self.game_status = GameStatus.LOBBY.value
 
-    def get_all_pokers(self):
+    def get_all_pokers(self) -> List[Any]:
+        """Get all pokers in the game"""
         return []
 
-    def set_init_chips(self, chip):
+    def set_init_chips(self, chip: int) -> None:
         # 设置初始筹码数x万
         self.base_chip = chip * 10000
 
-    def GameFinished(self):
+    def GameFinished(self) -> bool:
         """检查游戏是否结束"""
         for character in self.character_dict.values():
             if character.gold <= 0:
                 return True
         return False
 
-    def deal_cards(self, count=1, target=None):
+    def deal_cards(self, count: int = 1, target: Optional[Any] = None) -> List[Any]:
         """通用的发牌函数
         
         Args:
@@ -53,33 +59,33 @@ class Manager:
                     self.public_cards.append(card)
         return cards
 
-    def get_current_player(self):
+    def get_current_player(self) -> Any:
         """获取当前回合的玩家"""
         if not self.player_order:
             return None
         return self.player_order[self.current_player_index]
 
-    def next_player(self):
+    def next_player(self) -> Any:
         """移动到下一个玩家"""
         self.current_player_index = (self.current_player_index + 1) % len(self.player_order)
         return self.get_current_player()
 
-    def record_player_deal(self, player_name, cards):
+    def record_player_deal(self, player_name: str, cards: List[Any]) -> bool:
         """记录玩家的出牌"""
         # TODO: 在这里添加出牌合法性检查
         self.player_deals[player_name] = cards
         return True
 
-    def all_players_dealt(self):
+    def all_players_dealt(self) -> bool:
         """检查是否所有玩家都已出牌"""
         return len(self.player_deals) == len(self.player_order)
 
-    def confirm_round_result(self, player_name):
+    def confirm_round_result(self, player_name: str) -> bool:
         """玩家确认回合结果"""
         self.round_confirmations.add(player_name)
         return len(self.round_confirmations) == len(self.player_order)
 
-    def start_new_round(self, new_starter=None):
+    def start_new_round(self, new_starter: Optional[str] = None) -> None:
         """开始新的一轮"""
         self.game_status = GameStatus.ROUND_START.value
         self.current_player_index = 0
@@ -104,7 +110,7 @@ class Manager:
                 _tmp = self.player_order.pop(0)
                 self.player_order.append(_tmp)
 
-    def calculate_round_result(self):
+    def calculate_round_result(self) -> Dict[str, Any]:
         """计算本回合的结果"""
         result = {
             'deals': self.player_deals,
@@ -120,7 +126,7 @@ class Manager:
         
         return result
 
-    def Score(self, character):
+    def Score(self, character: Character) -> int:
         """计算玩家得分"""
         # 保留原有的得分计算逻辑
         _score_info = {
@@ -156,13 +162,13 @@ class Manager:
         self._after_score(character, _score_info)
         return character.chip * character.mag
 
-    def _before_score(self, character: Character, _score_info: dict):
+    def _before_score(self, character: Character, _score_info: Dict[str, Any]) -> None:
         pass
 
-    def _after_score(self, character: Character, _score_info: dict):
+    def _after_score(self, character: Character, _score_info: Dict[str, Any]) -> None:
         pass
     
-    def _score_card(self, character: Character, poker: Poker, _score_info: dict):
+    def _score_card(self, character: Character, poker: Poker, _score_info: Dict[str, Any]) -> None:
         _chip = 0
         _mag = 0
         if poker.Material == Poker_Material_Universal:
@@ -259,12 +265,12 @@ class Manager:
         if self.table_effect == Debuff_Big_Bet:
             pass
 
-    def FindPlayType(self, cards: list):
+    def FindPlayType(self, cards: List[Any]) -> Any:
         # 根据self.poker_play找到类型
         _type = Score_Name_No_Pair
         return _type
 
-    def play_round(self):
+    def play_round(self) -> None:
         """执行一个完整的德州扑克回合"""
         self.current_round += 1
         self.deck.shuffle()  # 每轮开始时洗牌
@@ -300,7 +306,7 @@ class Manager:
             all_cards = player.pokers + self.public_cards
             self.Score(player)
 
-    def dumpPlayerInfo(self):
+    def dumpPlayerInfo(self) -> Dict[str, Any]:
         info = dict()
         info['current_player_index'] = self.current_player_index
         info['players'] = self.player_order   
