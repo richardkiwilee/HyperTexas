@@ -10,7 +10,7 @@ from rich.padding import Padding
 import os
 from HyperTexas.game.enum import GameStatus
 
-test_dict = {'status':'playing',
+test_dict = {'game_status':'playing',
             'current_player_index': 0,
             'players': [{'name': 'Player 1', 'chip': 1000, 'pokers': [{'id': 1, 'Number': 13, 'Color': 1}, {'id': 2, 'Number': 12, 'Color': 2}], 
                         'hand_cards': [0x01], 'effects': [0x01], 'skill': "快速行动"}, 
@@ -29,6 +29,10 @@ test_dict = {'status':'playing',
             ],
             'game_log': ['Player 1 使用了 红桃K', 'Player 2 使用了 方块Q']
 }
+
+lobby_dict = {'game_status': 'lobby',
+              'ready_status': {'player1': True, 'player2': False}
+              }
 
 def create_card_slot(index: int, card_info: dict = None) -> Panel:
     if card_info and 'Number' in card_info:
@@ -120,7 +124,7 @@ def RefreshScreen(info: dict):
     console.width = 120
     console.height = 40
 
-    if info['game_status'] == 'playing':
+    if info['game_status'] == GameStatus.GAME.value:
         # 创建主布局：上下分割
         layout = Layout()
         layout.split(
@@ -182,8 +186,29 @@ def RefreshScreen(info: dict):
 
         console.print(layout)
     elif info['game_status'] == GameStatus.LOBBY.value:
-        print(info)
-    elif info['game_status'] == 'score':
+        # 创建大厅表格
+        table = Table(title="游戏大厅")
+        
+        # 添加列
+        table.add_column("玩家编号", justify="center", style="cyan")
+        table.add_column("玩家名字", style="magenta")
+        table.add_column("准备状态", justify="center", style="green")
+        
+        # 添加玩家数据
+        for idx, (player_name, ready_status) in enumerate(info.get('ready_status', {}).items(), start=1):
+            status_symbol = "✓" if ready_status else "✗"
+            table.add_row(str(idx), player_name, status_symbol)
+        
+        # 打印表格
+        console = Console()
+        console.print("\n")  # 添加一些空行使显示更美观
+        console.print(table)
+        console.print("\n游戏指令:")
+        console.print("- ready: 准备开始游戏")
+        console.print("- cancel: 取消准备")
+        console.print("- start: 开始游戏（仅房主可用）")
+        console.print("- exit: 退出游戏")
+    elif info['game_status'] == GameStatus.SCORE.value:
         pass
 
 if __name__ == '__main__':

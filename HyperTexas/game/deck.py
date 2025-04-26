@@ -32,6 +32,10 @@ class Deck:
                 return poker
         return None
 
+    def dump(self):
+        return [poker.to_dict() for poker in self.cards]
+
+
 class ConsumeDeck:
     def __init__(self):
         self.cards = []

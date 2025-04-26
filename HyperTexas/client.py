@@ -99,23 +99,21 @@ class Client:
                     self.running = False  # 设置运行状态为False
                     os._exit(0)  # 强制结束所有线程
                     break
-                
                 # 根据游戏状态处理不同的命令
                 if self.table_info.get('game_status') == GameStatus.LOBBY.value:
-                    if action in [LobbyAction.READY.value, LobbyAction.CANCEL.value]:
+                    if action == LobbyAction.READY.value:
                         self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
-                    else:
-                        print('In lobby, available commands: ready, cancel, exit')
-                
-                elif self.table_info.get('game_status') == GameStatus.IN_GAME.value:
+                    if action == LobbyAction.CANCEL.value:
+                        self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
+                    if action == LobbyAction.START_GAME.value:
+                        self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
+                if self.table_info.get('game_status') == GameStatus.GAME.value:
                     if action in ['skill', 'card']:
                         self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
                     else:
                         print('In game, available commands: skill, card, exit')
-                
-                else:
-                    print('Unknown game status:', self.table_info.get('game_status'))
-                    print('Available commands: exit')
+                if self.table_info.get('game_status') == GameStatus.SCORE.value:
+                    pass
                     
             except KeyboardInterrupt:
                 print('\nReceived keyboard interrupt, exiting...')
@@ -138,11 +136,8 @@ class Client:
             for resp in subscribeResps:
                 if not self.running:  # 检查运行状态
                     break
-                update_info = json.loads(resp.body)
-                if update_info['game_status'] == GameStatus.LOBBY.value:
-                    pass
-                else:
-                    RefreshScreen(**update_info)
+                self.table_info = json.loads(resp.body)
+                RefreshScreen(self.table_info)
         except Exception as ex:
             if self.running:  # 只在正常运行时打印错误
                 print('Error in message listener:', str(ex))

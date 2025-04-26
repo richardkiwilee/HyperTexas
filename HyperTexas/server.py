@@ -64,6 +64,8 @@ class LobbyServicer(rpc.LobbyServicer):
         sender = request.sender
         body = json.loads(request.body)
         logger.info('Receive from {}: {}'.format(sender, body))
+        
+        # 大厅状态
         if self.gm.game_status == GameStatus.LOBBY.value:
             if body['action'] == LobbyAction.LOGIN.value:
                 username = body['arg1']
@@ -71,230 +73,131 @@ class LobbyServicer(rpc.LobbyServicer):
                     self.host = username
                 if username not in self.users:
                     self.users[username] = dict()
-                    self._broadcast() 
+                    self.users[username]['ready'] = False
+                    self._broadcast()
                     return self._response(1, 200, json.dumps('Login'))
+                else:
+                    return self._response(1, 200, json.dumps('username already in use'))
+            
             if body['action'] == LobbyAction.LOGOUT.value:
                 username = body['arg1']
-                self.users.pop(username)
-                self._broadcast()
+                if username in self.users:
+                    self.users.pop(username)
+                    self._broadcast()
                 return self._response(1, 200, json.dumps('Logout'))
+            
             if body['action'] == LobbyAction.READY.value:
-                self._broadcast()
+                if sender in self.users:
+                    self.users[sender]['ready'] = True
+                    self._broadcast()
                 return self._response(1, 200, json.dumps('Ready'))
+            
             if body['action'] == LobbyAction.CANCEL.value:
-                self._broadcast()
+                if sender in self.users:
+                    self.users[sender]['ready'] = False
+                    self._broadcast()
                 return self._response(1, 200, json.dumps('Cancel Ready'))
+            
             if body['action'] == LobbyAction.START_GAME.value:
-                # 设置游戏状态为回合开始
-                self.gm.game_status = GameStatus.ROUND_START.value
+                # 检查是否所有玩家都准备好
+                if sender == self.host:
+                    if not all(user.get('ready', False) for user in self.users.values()):
+                        return self._response(1, 400, json.dumps('Not all players are ready'))
+                    # 设置游戏状态为游戏中
+                    self.gm.game_status = GameStatus.GAME.value
+                    # 洗牌
+                    self.gm.deck.shuffle()
+                    # 随机排序玩家位置
+                    self.gm.player_order = list(self.users.keys())
+                    random.shuffle(self.gm.player_order)                
+                    # 发初始手牌
+                    for player in self.gm.player_order:
+                        # TODO: 实现发牌逻辑
+                        pass
+                else:
+                    return self._response(1, 400, json.dumps('Not host'))
                 self._broadcast()
-                # 洗牌
-                self.gm.deck.shuffle()
-                # 随机排序玩家位置
-                self.gm.active_players = list(self.character_dict.values())
-                random.shuffle(self.gm.active_players)
-                self._broadcast()
-                self._broadcast()
-                # 设置游戏状态为发牌前
-                self.gm.game_status = GameStatus.BEFORE_GIVE_PLAYER_CARDS.value
-                # 检查每个玩家的发牌前可选操作
-                for player in self.gm.active_players:
-                    if player.has_pre_deal_options():  # 假设这个方法检查玩家是否有发牌前可选操作
-                        # 启动该玩家的操作定时器
-                        self._start_player_timer(player.name)                        
-                        # 向玩家发送询问消息
-                        options_msg = {
-                            'type': 'pre_deal_options',
-                            'options': player.get_pre_deal_options()  # 获取可选操作列表
-                        }
-                        self._broadcast()
-                
-                # 广播游戏开始消息
-                start_msg = {
-                    'type': 'game_start',
-                    'player_order': [p.name for p in self.gm.active_players]
-                }
-                self._broadcast()
-                
-                return self._response(1, 200, json.dumps(start_msg))
-            if body['action'] == LobbyAction.KICK.value:
-                pass
+                return self._response(1, 200, json.dumps('Game Started'))
         
-        if self.gm.game_status == GameStatus.ROUND_START.value:
-            # 广播回合开始消息
-            round_start_msg = {
-                'type': 'round_start',
-                'player_order': [p.name for p in self.gm.active_players]
-            }
-            self._broadcast()
-            # 进入发牌前阶段
-            self.gm.game_status = GameStatus.BEFORE_GIVE_PLAYER_CARDS.value
-            return self._response(1, 200, json.dumps('Round started'))
-
-        if self.gm.game_status == GameStatus.BEFORE_GIVE_PLAYER_CARDS.value:
-            # 按顺序等待玩家操作回合 每位玩家完成回合后发给他底牌并轮到下一位玩家
-            current_player = self.gm.get_current_player()
-            if not current_player or current_player.name != request.name:
+        # 游戏进行中状态
+        elif self.gm.game_status == GameStatus.GAME.value:
+            # 检查是否是当前玩家的回合
+            if sender != self.gm.player_order[self.gm.current_player_index]:
                 return self._response(1, 400, json.dumps('Not your turn'))
-
-            # 处理玩家的操作
-            if 'action' not in body:
-                return self._response(1, 400, json.dumps('Invalid request format'))
-
-            # 发底牌给当前玩家
-            self.gm.deal_to_player(current_player.name)
-            # 广播玩家获得底牌的消息（不包含具体牌面）
-            self._broadcast()
-            # 移动到下一个玩家
-            next_player = self.gm.next_player()
-            if next_player:
-                self._broadcast()
-            else:
-                # 所有玩家都已获得底牌，进入下一阶段
-                self.gm.game_status = GameStatus.BEFORE_PUBLIC_CARDS_3.value
-
-            return self._response(1, 200, json.dumps('Action processed'))
-
-        if self.gm.game_status == GameStatus.BEFORE_PUBLIC_CARDS_3.value:
-            # 按顺序等待玩家操作回合 所有玩家完成回合后发3张公共牌
-            current_player = self.gm.get_current_player()
-            if not current_player or current_player.name != request.name:
-                return self._response(1, 400, json.dumps('Not your turn'))
-
-            # 处理玩家的操作
-            if 'action' not in body:
-                return self._response(1, 400, json.dumps('Invalid request format'))
-
-            # 移动到下一个玩家
-            next_player = self.gm.next_player()
-            if next_player:
-                self._broadcast()
-            else:
-                # 所有玩家都已完成操作，发3张公共牌
-                public_cards = self.gm.deal_public_cards(3)
-                self._broadcast()
-                # 进入下一阶段
-                self.gm.game_status = GameStatus.BEFORE_PUBLIC_CARDS_4.value
-
-            return self._response(1, 200, json.dumps('Action processed'))
-
-        if self.gm.game_status == GameStatus.BEFORE_PUBLIC_CARDS_4.value:
-            # 按顺序等待玩家操作回合 所有玩家完成回合后发第4张公共牌
-            current_player = self.gm.get_current_player()
-            if not current_player or current_player.name != request.name:
-                return self._response(1, 400, json.dumps('Not your turn'))
-
-            # 处理玩家的操作
-            if 'action' not in body:
-                return self._response(1, 400, json.dumps('Invalid request format'))
-
-            # 移动到下一个玩家
-            next_player = self.gm.next_player()
-            if next_player:
-                self._broadcast()
-            else:
-                # 所有玩家都已完成操作，发第4张公共牌
-                public_cards = self.gm.deal_public_cards(1)
-                self._broadcast()
-                # 进入下一阶段
-                self.gm.game_status = GameStatus.BEFORE_PUBLIC_CARDS_5.value
-
-            return self._response(1, 200, json.dumps('Action processed'))
-
-        if self.gm.game_status == GameStatus.BEFORE_PUBLIC_CARDS_5.value:
-            # 按顺序等待玩家操作回合 所有玩家完成回合后发第5张公共牌
-            current_player = self.gm.get_current_player()
-            if not current_player or current_player.name != request.name:
-                return self._response(1, 400, json.dumps('Not your turn'))
-
-            # 处理玩家的操作
-            if 'action' not in body:
-                return self._response(1, 400, json.dumps('Invalid request format'))
-
-            # 移动到下一个玩家
-            next_player = self.gm.next_player()
-            if next_player:
-                self._broadcast()
-            else:
-                # 所有玩家都已完成操作，发第5张公共牌
-                public_cards = self.gm.deal_public_cards(1)
-                self._broadcast()
-                # 进入下一阶段
-                self.gm.game_status = GameStatus.BEFORE_OPEN.value
-
-            return self._response(1, 200, json.dumps('Action processed'))
-
-        if self.gm.game_status == GameStatus.BEFORE_OPEN.value:
-            # 按顺序等待玩家操作回合 所有玩家完成回合后进入开牌阶段
-            current_player = self.gm.get_current_player()
-            if not current_player or current_player.name != request.name:
-                return self._response(1, 400, json.dumps('Not your turn'))
-
-            # 处理玩家的操作
-            if 'action' not in body:
-                return self._response(1, 400, json.dumps('Invalid request format'))
-
-            # 移动到下一个玩家
-            next_player = self.gm.next_player()
-            if next_player:
-                self._broadcast()
-            else:
-                # 所有玩家都已完成操作，进入开牌阶段
-                self.gm.game_status = GameStatus.COLLECT_DEAL.value
-                self._broadcast()
-
-            return self._response(1, 200, json.dumps('Action processed'))
-
-        if self.gm.game_status == GameStatus.COLLECT_DEAL.value:
-            # 所有玩家同时进行回合操作 等待所有玩家均完成开牌进入结算阶段
-            # 检查是否是合法的出牌请求
-            if 'action' not in body or 'cards' not in body:
-                return self._response(1, 400, json.dumps('Invalid request format'))
             
-            player_name = request.name
-            # 记录玩家的出牌
-            if not self.gm.record_player_deal(player_name, body['cards']):
-                return self._response(1, 400, json.dumps('Invalid cards'))
+            # 根据公共牌数量判断游戏阶段
+            public_cards_count = len(self.gm.public_cards)
             
-            # 广播玩家的出牌信息
-            self._broadcast()
+            if body['action'] == TurnAction.USE_CARD.value:
+                # 处理使用卡牌
+                card_id = body.get('arg1')
+                if card_id:
+                    # TODO: 实现使用卡牌逻辑
+                    self._next_player()
+                    self._broadcast()
             
-            # 检查是否所有玩家都已出牌
-            if self.gm.all_players_dealt():
-                # 所有玩家都已出牌，进入回合结束阶段
-                self.gm.game_status = GameStatus.ROUND_END.value
-                # 计算本回合结果
-                round_result = self.gm.calculate_round_result()
-                # 广播回合结果
+            elif body['action'] == TurnAction.USE_SKILL.value:
+                # 处理使用技能
+                skill_id = body.get('arg1')
+                if skill_id:
+                    # TODO: 实现使用技能逻辑
+                    self._next_player()
+                    self._broadcast()
+            
+            elif body['action'] == TurnAction.PASS.value:
+                # 处理过牌
+                self._next_player()
                 self._broadcast()
-                return self._response(1, 200, json.dumps('Round ended'))
-            else:
-                # 还有玩家未出牌
-                return self._response(1, 200, json.dumps('Deal recorded'))
-
-        if self.gm.game_status == GameStatus.ROUND_END.value:
-            # 广播回合结束消息 广播计分结果 等待所有玩家确认后开启新的一轮
-            if 'action' not in body or body['action'] != 'confirm_result':
-                return self._response(1, 400, json.dumps('Invalid request format'))
-
-            # 记录玩家确认
-            if self.gm.confirm_round_result(request.name):
-                # 所有玩家都已确认，开始新的一轮
-                self.gm.start_new_round()
-                self._broadcast()
-            return self._response(1, 200, json.dumps('Result confirmed'))
-
-        if self.gm.game_status == GameStatus.GAME_END.value:
-            # 广播游戏结束消息 广播最终结果 回到大厅状态
-            final_result = {
-                'type': 'game_end',
-                'final_scores': {p.name: p.score for p in self.gm.active_players}
-            }
-            self._broadcast()
-            # 回到大厅状态
+            
+            elif body['action'] == TurnAction.FOLD.value:
+                # 处理弃牌
+                if sender in self.gm.player_order:
+                    self.gm.player_order.remove(sender)
+                    if len(self.gm.player_order) <= 1:
+                        # 只剩一个玩家，进入计分阶段
+                        self.gm.game_status = GameStatus.SCORE.value
+                    self._next_player()
+                    self._broadcast()
+            
+            # 检查是否需要发更多公共牌
+            if self._round_complete():
+                if public_cards_count < 5:
+                    # 发下一张公共牌
+                    # TODO: 实现发公共牌逻辑
+                    self._broadcast()
+                else:
+                    # 所有公共牌都发完且回合结束，进入计分阶段
+                    self.gm.game_status = GameStatus.SCORE.value
+                    self._broadcast()
+        
+        # 计分状态
+        elif self.gm.game_status == GameStatus.SCORE.value:
+            # 计算得分
+            # TODO: 实现计分逻辑
+            
+            # 重置游戏状态
             self.gm.game_status = GameStatus.LOBBY.value
-            return self._response(1, 200, json.dumps('Game ended'))
+            self.gm.public_cards = []
+            self.gm.current_player_index = 0
+            
+            # 重置玩家准备状态
+            for user in self.users.values():
+                user['ready'] = False
+            
+            self._broadcast()
+            return self._response(1, 200, json.dumps('Round Complete'))
         
+        return self._response(1, 200, json.dumps('Action processed'))
+
+    def _next_player(self):
+        """移动到下一个玩家"""
+        self.gm.current_player_index = (self.gm.current_player_index + 1) % len(self.gm.player_order)
+
+    def _round_complete(self):
+        """检查当前回合是否结束"""
+        # TODO: 实现回合结束检查逻辑
+        return False
+
     def Subscribe(self, request, context):
         """
         Handle client subscription to game state updates
@@ -325,7 +228,6 @@ class LobbyServicer(rpc.LobbyServicer):
             if request.sender in self.users:
                 if 'stream' in self.users[request.sender]:
                     del self.users[request.sender]['stream']
-                self.gm.player_exit(request.sender)
 
     def _response(self, msgtype, status, body):
         return pb2.GeneralResponse(sequence=0, msgtype=msgtype, status=status, sender='__SERVER__', body=body)
@@ -337,13 +239,27 @@ class LobbyServicer(rpc.LobbyServicer):
 
     def _broadcast(self):
         self.seq += 1
-        game_state = self.gm.game_status  # Assuming this method exists to get current game state
+        data = dict()
+        data['game_status'] = self.gm.game_status
+        if data['game_status'] == GameStatus.LOBBY.value:
+            ready_status = dict()
+            print(self.users)
+            for user, _data in self.users.items():
+                ready_status[user] = _data['ready']
+            data['ready_status'] = ready_status
+        if data['game_status'] == GameStatus.GAME.value:
+            data['current_player_index'] = self.gm.current_player_index
+            data['players'] = [p.to_dict() for p in self.gm.player_order] # 
+            print(data['players'])
+            data['public_cards'] = self.gm.public_cards
+            data['last_used_cards'] = self.gm.last_used_cards
+            data['deck'] = self.gm.deck.dump()
         _obj = pb2.Broadcast(
             sequence=self.seq,
             msgtype=0,
             status=200,
             sender='__SYSTEM__',
-            body=json.dumps(game_state)
+            body=json.dumps(data)
         )
         for user in self.users:
             if 'stream' in self.users[user]:
@@ -359,17 +275,17 @@ class LobbyServicer(rpc.LobbyServicer):
 
 
 def server(port=50051):
-    logger.info('>>> Starting server...')
+    logger.info('Starting server')
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
     rpc.add_LobbyServicer_to_server(LobbyServicer(), server)
     server.add_insecure_port(f'[::]:{port}')
-    logger.info('>>> Server started')
+    logger.info('Server started')
     server.start()
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.info('>>> Exiting')
+        logger.info('Exiting')
         # to unblock all queues
         for q in queues:
             q.put(None)
