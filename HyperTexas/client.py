@@ -8,7 +8,7 @@ import string
 import argparse
 import json
 import os
-from HyperTexas.game.enum import LobbyAction
+from HyperTexas.game.enum import GameStatus, LobbyAction
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
 from HyperTexas.game.manager import Manager
@@ -27,9 +27,10 @@ class Client:
         self.stub = rpc.LobbyStub(channel)
         # 启动一个新线程监听消息
         self.table_info = dict()
-        loginResp = self.sendMessage(LobbyAction.LOGIN.value, self.username)
+        retry = 0
+        loginResp = self.sendMessage(LobbyAction.LOGIN.value, self.username, None, None, None, None)
         if loginResp.status != 200:
-            print('Failed to login chatroom: {}'.format(loginResp.msg))
+            print('Failed to login lobby: {}'.format(loginResp.msg))
             return
         listening = threading.Thread(target=self.__listen_for_messages, daemon=True)
         listening.start()
@@ -94,88 +95,55 @@ class Client:
                 arg3 = parts[3]
                 arg4 = parts[4]
                 arg5 = parts[5]
+                print(action)
                 if action == 'exit':
+                    print('111')
+                    self.sendMessage(LobbyAction.LOGOUT.value, self.username, arg2, arg3, arg4, arg5)
                     break
-                elif action == 'ready':
+                if self.table_info['game_status'] == GameStatus.LOBBY.value:
                     pass
-                elif action == 'cancel':
-                    pass
-                elif action == 'skill':
-                    pass
-                elif action == 'card':
-                    pass
-                else:
-                    print('Unknown action: {}'.format(action))
-                    continue
-                self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
+                if self.table_info['game_status'] == GameStatus.IN_GAME.value:
+                    if action == 'ready':
+                        self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)
+                        pass
+                    elif action == 'cancel':
+                        self.sendMessage(LobbyAction.CANCEL.value, self.username, arg2, arg3, arg4, arg5)
+                        pass
+                if self.table_info['game_status'] == GameStatus.IN_GAME.value:
+                    if action == 'skill':
+                        self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
+                    elif action == 'card':
+                        self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
+                    else:
+                        print('Unknown action: {}'.format(action))
+                        continue                
             except KeyboardInterrupt:
                 pass
             except Exception as ex:
-                self.gm.refresh(username=self.username)
+                pass
 
     def __listen_for_messages(self):
         # 从服务器接收新消息并显示
-        subscribeResps = self.stub.Subscribe(pb2.GeneralRequest(name=self.username))
+        subscribeResps = self.stub.Subscribe(pb2.GeneralRequest(sender=self.username, body=json.dumps(dict())))
         subscribeResp = next(subscribeResps)
         if subscribeResp is None:
             print('Failed to subscribe game.')
             return
         print('Successfully joined the game.')
-        self.gm.refresh_ready()
         for resp in subscribeResps:
-            if resp.type == pb2.Broadcast.UNSPECIFIED:
-                print(f'Unspecified: {resp.msg}')
-            elif resp.type == pb2.Broadcast.FAILURE:
-                print(f'Failure: {resp.msg}')
-            elif resp.type == pb2.Broadcast.USER_JOIN:
-                print(f'{resp.name} has joined the game.')
-                self.gm.player_join(resp.name)
-                self.gm.ready_status[resp.name] = False
-                self.gm.refresh_ready()
-            elif resp.type == pb2.Broadcast.USER_LEAVE:
-                print(f'{resp.name} has lefted the game.')
-                self.gm.player_exit(resp.msg)
-                self.gm.refresh_ready()
-            elif resp.type == pb2.Broadcast.USER_READY:
-                body = json.loads(resp.msg)
-                self.gm.ready_status = body
-                if self.gm.accept_ready_message:
-                    self.gm.refresh_ready()
-            elif resp.type == pb2.Broadcast.GAME_START:
-                self.gm.clear_score()
-                self.gm.game_status = GameStatus.PLAYING.value
-            elif resp.type == pb2.Broadcast.NEW_ROUND:
-                msg = json.loads(resp.msg)
-                _seed = msg['seed']
-                _order = msg['order']
-                _peek = msg['peek']
-                # mask_peek = dict()
-                # mask_peek[self.username] = _peek[self.username]
-                self.gm.new_round(_seed, _order, peek_dict=_peek)
-                self.gm.refresh(username=self.username)
-            elif resp.type == pb2.Broadcast.GAME_END:
-                self.gm.game_end()
-            elif resp.type == pb2.Broadcast.ROUND_END:
-                self.gm.round_end()
-            elif resp.type == pb2.Broadcast.PLAYER_TURN:
-                print(f'{resp.msg}\'s turn.')
-                self.gm.turnorder.setCurrent(resp.msg)
-                self.gm.refresh(username=self.username)
-            elif resp.type == pb2.Broadcast.PLAYER_ACTION:
-                print(f'{resp.name} do: {resp.msg}')
-                self.gm.handle(resp)
-                self.gm.refresh(msg=resp, username=self.username)
+            update_info = json.loads(resp.body)
+            if update_info['game_status'] == GameStatus.LOBBY.value:
+                pass
             else:
-                print(f'Unknown message: {resp}')
+                RefreshScreen(**update_info)
 
     def sendMessage(self, action, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         msg = {
             'action': action, 'arg1': arg1, 'arg2': arg2, 'arg3': arg3, 'arg4': arg4, 'arg5': arg5
         }
         resp = self.stub.Handle(pb2.GeneralRequest(sender=self.username, body=json.dumps(msg)))
-        if not resp.status:
-            pass
-        print(resp.msg)
+        print('Server response: ', resp)
+        return resp
 
 
 

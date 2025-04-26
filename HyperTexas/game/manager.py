@@ -308,6 +308,7 @@ class Manager:
 
     def dumpPlayerInfo(self) -> Dict[str, Any]:
         info = dict()
+        info['game_status'] = self.game_status
         info['current_player_index'] = self.current_player_index
         info['players'] = self.player_order   
         info['public_cards'] = [i.to_dict() for i in self.public_cards]

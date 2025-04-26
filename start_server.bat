@@ -1,1 +1,1 @@
-python.exe -mHyperTexas.main
+python.exe -mHyperTexas.main host -n host -d -v

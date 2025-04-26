@@ -8,6 +8,7 @@ from rich import box
 from rich.columns import Columns
 from rich.padding import Padding
 import os
+from HyperTexas.game.enum import GameStatus
 
 test_dict = {'status':'playing',
             'current_player_index': 0,
@@ -119,7 +120,7 @@ def RefreshScreen(info: dict):
     console.width = 120
     console.height = 40
 
-    if info['status'] == 'playing':
+    if info['game_status'] == 'playing':
         # 创建主布局：上下分割
         layout = Layout()
         layout.split(
@@ -180,9 +181,9 @@ def RefreshScreen(info: dict):
         layout["right_bottom"].update(log_panel)
 
         console.print(layout)
-    elif info['status'] == 'lobby':
-        pass
-    elif info['status'] == 'score':
+    elif info['game_status'] == GameStatus.LOBBY.value:
+        print(info)
+    elif info['game_status'] == 'score':
         pass
 
 if __name__ == '__main__':

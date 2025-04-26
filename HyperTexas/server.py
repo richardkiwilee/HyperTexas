@@ -2,6 +2,7 @@ import time
 from concurrent import futures
 import queue
 import random
+import logging
 import json
 from enum import Enum
 from urllib.parse import uses_fragment
@@ -16,7 +17,17 @@ from HyperTexas.game.enum import *
 
 
 queues = []
-
+# 配置日志记录器
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# 创建控制台处理器
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+# 创建格式化器
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+# 将处理器添加到日志记录器
+logger.addHandler(console_handler)
 
 class LobbyServicer(rpc.LobbyServicer):
     def __init__(self):
@@ -52,6 +63,7 @@ class LobbyServicer(rpc.LobbyServicer):
     def Handle(self, request, context):
         sender = request.sender
         body = json.loads(request.body)
+        logger.info('Receive from {}: {}'.format(sender, body))
         if self.gm.game_status == GameStatus.LOBBY.value:
             if body['action'] == LobbyAction.LOGIN.value:
                 username = body['arg1']
@@ -106,6 +118,7 @@ class LobbyServicer(rpc.LobbyServicer):
                 return self._response(1, 200, json.dumps(start_msg))
             if body['action'] == LobbyAction.KICK.value:
                 pass
+        
         if self.gm.game_status == GameStatus.ROUND_START.value:
             # 广播回合开始消息
             round_start_msg = {
@@ -305,7 +318,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     break
                 yield message
         except Exception as e:
-            print(f"Error in subscription stream for {request.sender}: {e}")
+            logger.error(f"Error in subscription stream for {request.sender}: {e}")
         finally:
             # Cleanup when client disconnects
             if request.sender in self.users:
@@ -345,16 +358,17 @@ class LobbyServicer(rpc.LobbyServicer):
 
 
 def server(port=50051):
+    logger.info('>>> Starting server...')
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
     rpc.add_LobbyServicer_to_server(LobbyServicer(), server)
     server.add_insecure_port(f'[::]:{port}')
+    logger.info('>>> Server started')
     server.start()
-    # print('>>> Server started')
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        # print('>>> Exiting')
+        logger.info('>>> Exiting')
         # to unblock all queues
         for q in queues:
             q.put(None)

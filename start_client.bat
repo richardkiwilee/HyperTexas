@@ -1,1 +1,1 @@
-python.exe -mHyperTexas.main
+python.exe -mHyperTexas.main join -d -n player1
