@@ -12,9 +12,9 @@ from HyperTexas.game.enum import GameStatus
 
 test_dict = {'game_status':'playing',
             'current_player_index': 0,
-            'players': [{'name': 'Player 1', 'chip': 1000, 'pokers': [{'id': 1, 'Number': 13, 'Color': 1}, {'id': 2, 'Number': 12, 'Color': 2}], 
+            'players': [{'username': 'Player 1', 'chip': 1000, 'pokers': [{'id': 1, 'Number': 13, 'Color': 1}, {'id': 2, 'Number': 12, 'Color': 2}], 
                         'hand_cards': [0x01], 'effects': [0x01], 'skill': "快速行动"}, 
-                        {'name': 'Player 2', 'chip': 2000, 'pokers': [{'id': 3, 'Number': 11, 'Color': 3}, {'id': 4, 'Number': 10, 'Color': 4}], 
+                        {'username': 'Player 2', 'chip': 2000, 'pokers': [{'id': 3, 'Number': 11, 'Color': 3}, {'id': 4, 'Number': 10, 'Color': 4}], 
                         'hand_cards': [0x02], 'effects': [0x02], 'skill': "防御姿态"}],
             'public_cards': [{'id': 5, 'Number': 1, 'Color': 1}, {'id': 6, 'Number': 2, 'Color': 2}],
             'last_used_cards': [
@@ -87,7 +87,7 @@ def create_player_table(players: list) -> Table:
         
         table.add_row(
             player_id,
-            player['name'],
+            player['username'],
             str(player['chip']),
             poker_text,
             skill_text
@@ -123,7 +123,8 @@ def RefreshScreen(info: dict):
     console.clear()
     console.width = 120
     console.height = 40
-
+    if 'game_log' not in info.keys():
+        info['game_log'] = []
     if info['game_status'] == GameStatus.GAME.value:
         # 创建主布局：上下分割
         layout = Layout()

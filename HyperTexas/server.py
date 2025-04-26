@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from HyperTexas.action import *
 import threading
 from HyperTexas.game.enum import *
+from HyperTexas.game.player import PlayerInfo
 
 
 queues = []
@@ -112,7 +113,11 @@ class LobbyServicer(rpc.LobbyServicer):
                     # 洗牌
                     self.gm.deck.shuffle()
                     # 随机排序玩家位置
-                    self.gm.player_order = list(self.users.keys())
+                    for k,v in self.users.items():
+                        player = PlayerInfo()
+                        player.username = k
+                        player.chip = self.gm.base_chip
+                        self.gm.player_order.append(player)
                     random.shuffle(self.gm.player_order)                
                     # 发初始手牌
                     for player in self.gm.player_order:

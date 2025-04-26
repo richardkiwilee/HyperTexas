@@ -4,7 +4,7 @@ class Character:
     def __init__(self):
         self.desc = ""
         self.max_poker = 2      # 最大扑克手牌数
-        self.poker = []
+        self.pokers = []
         self.poker_play = []
         self.max_consume = 5    # 最多5个消耗牌
         self.consume = []

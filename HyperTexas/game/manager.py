@@ -8,14 +8,13 @@ from HyperTexas.game.enum import *
 
 class Manager:
     def __init__(self):
-        self.character_dict = dict()
         self.public_cards = []
         self.last_used_cards = []
         self.deck = Deck()
         self.consume = ConsumeDeck()
         self.deck.shuffle()
         self.consume.shuffle()
-        self.player_order = []  # 当前回合活跃的玩家列表
+        self.player_order = []  # 当前回合活跃的玩家列表 保存player类
         self.base_chip = 30 * 10000     # 初始30万筹码
         self.level = 1      # 每个回合 输的人要额外支付level * 1k的底注
         self.player_deals = {}  # 记录玩家的出牌
@@ -33,7 +32,7 @@ class Manager:
 
     def GameFinished(self) -> bool:
         """检查游戏是否结束"""
-        for character in self.character_dict.values():
+        for character in self.player_order:
             if character.gold <= 0:
                 return True
         return False
@@ -274,9 +273,6 @@ class Manager:
         """执行一个完整的德州扑克回合"""
         self.current_round += 1
         self.deck.shuffle()  # 每轮开始时洗牌
-        
-        # 重置玩家状态
-        self.player_order = list(self.character_dict.values())
         
         # Pre-flop: 发放初始牌
         for player in self.player_order:
