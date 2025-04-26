@@ -33,6 +33,8 @@ class Client:
         if loginResp.status != 200:
             print('Failed to login lobby: {}'.format(loginResp.msg))
             return
+        # 初始化lobby
+        RefreshScreen(json.loads(loginResp.body))
         self.listening_thread = threading.Thread(target=self.__listen_for_messages, daemon=True)
         self.listening_thread.start()
         self.input_thread = threading.Thread(target=self.add_input, daemon=True)

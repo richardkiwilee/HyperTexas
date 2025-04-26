@@ -74,8 +74,8 @@ class LobbyServicer(rpc.LobbyServicer):
                 if username not in self.users:
                     self.users[username] = dict()
                     self.users[username]['ready'] = False
-                    self._broadcast()
-                    return self._response(1, 200, json.dumps('Login'))
+                    lobby_init = self._broadcast()
+                    return self._response(1, 200, json.dumps(lobby_init))
                 else:
                     return self._response(1, 200, json.dumps('username already in use'))
             
@@ -264,6 +264,7 @@ class LobbyServicer(rpc.LobbyServicer):
         for user in self.users:
             if 'stream' in self.users[user]:
                 self.users[user]['stream'].put(_obj)
+        return data
 
     def _onDisconnectWrapper(self, request, context):
         def callback():
