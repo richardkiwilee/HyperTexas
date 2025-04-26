@@ -27,17 +27,16 @@ class Client:
         self.stub = rpc.LobbyStub(channel)
         # 启动一个新线程监听消息
         self.table_info = dict()
+        self.running = True  # 添加运行状态标志
         retry = 0
         loginResp = self.sendMessage(LobbyAction.LOGIN.value, self.username, None, None, None, None)
         if loginResp.status != 200:
             print('Failed to login lobby: {}'.format(loginResp.msg))
             return
-        listening = threading.Thread(target=self.__listen_for_messages, daemon=True)
-        listening.start()
-        input_queue = queue.Queue()
-        input_thread = threading.Thread(target=self.add_input, args=(input_queue, self.stub))
-        input_thread.daemon = True
-        input_thread.start()
+        self.listening_thread = threading.Thread(target=self.__listen_for_messages, daemon=True)
+        self.listening_thread.start()
+        self.input_thread = threading.Thread(target=self.add_input, daemon=True)
+        self.input_thread.start()
 
     def isPlayer(self, s: str) -> bool:
         """
@@ -77,65 +76,76 @@ class Client:
         return False
 
 
-    def add_input(self, input_queue, stub):
-        while True:
+    def add_input(self):
+        # 从控制台获取输入并发送到服务器
+        while self.running:
             try:
-                _input = input("").lower()
-                parts = _input.split(' ')
-                if len(parts) > 5:
-                    print('Invalid parameter numbers')
+                # 等待用户输入
+                command = input('> ')
+                if not command:
                     continue
-                parts += [None] * (5 - len(parts))
+                # 解析命令和参数
+                parts = command.strip().split()
                 action = parts[0]
-                for arg in parts[1:]:
-                    if arg is not None:
-                        pass
-                arg1 = parts[1]
-                arg2 = parts[2]
-                arg3 = parts[3]
-                arg4 = parts[4]
-                arg5 = parts[5]
-                print(action)
+                arg1 = parts[1] if len(parts) > 1 else None
+                arg2 = parts[2] if len(parts) > 2 else None
+                arg3 = parts[3] if len(parts) > 3 else None
+                arg4 = parts[4] if len(parts) > 4 else None
+                arg5 = parts[5] if len(parts) > 5 else None                
+                print('Command received:', action)
                 if action == 'exit':
-                    print('111')
+                    print('Exiting game...')
                     self.sendMessage(LobbyAction.LOGOUT.value, self.username, arg2, arg3, arg4, arg5)
+                    self.running = False  # 设置运行状态为False
+                    os._exit(0)  # 强制结束所有线程
                     break
-                if self.table_info['game_status'] == GameStatus.LOBBY.value:
-                    pass
-                if self.table_info['game_status'] == GameStatus.IN_GAME.value:
-                    if action == 'ready':
-                        self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)
-                        pass
-                    elif action == 'cancel':
-                        self.sendMessage(LobbyAction.CANCEL.value, self.username, arg2, arg3, arg4, arg5)
-                        pass
-                if self.table_info['game_status'] == GameStatus.IN_GAME.value:
-                    if action == 'skill':
-                        self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
-                    elif action == 'card':
+                
+                # 根据游戏状态处理不同的命令
+                if self.table_info.get('game_status') == GameStatus.LOBBY.value:
+                    if action in [LobbyAction.READY.value, LobbyAction.CANCEL.value]:
+                        self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
+                    else:
+                        print('In lobby, available commands: ready, cancel, exit')
+                
+                elif self.table_info.get('game_status') == GameStatus.IN_GAME.value:
+                    if action in ['skill', 'card']:
                         self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
                     else:
-                        print('Unknown action: {}'.format(action))
-                        continue                
+                        print('In game, available commands: skill, card, exit')
+                
+                else:
+                    print('Unknown game status:', self.table_info.get('game_status'))
+                    print('Available commands: exit')
+                    
             except KeyboardInterrupt:
-                pass
+                print('\nReceived keyboard interrupt, exiting...')
+                self.sendMessage(LobbyAction.LOGOUT.value, self.username)
+                self.running = False  # 设置运行状态为False
+                os._exit(0)  # 强制结束所有线程
+                break
             except Exception as ex:
-                pass
+                print('Error processing command:', str(ex))
 
     def __listen_for_messages(self):
         # 从服务器接收新消息并显示
-        subscribeResps = self.stub.Subscribe(pb2.GeneralRequest(sender=self.username, body=json.dumps(dict())))
-        subscribeResp = next(subscribeResps)
-        if subscribeResp is None:
-            print('Failed to subscribe game.')
-            return
-        print('Successfully joined the game.')
-        for resp in subscribeResps:
-            update_info = json.loads(resp.body)
-            if update_info['game_status'] == GameStatus.LOBBY.value:
-                pass
-            else:
-                RefreshScreen(**update_info)
+        try:
+            subscribeResps = self.stub.Subscribe(pb2.GeneralRequest(sender=self.username, body=json.dumps(dict())))
+            subscribeResp = next(subscribeResps)
+            if subscribeResp is None:
+                print('Failed to subscribe game.')
+                return
+            print('Successfully joined the game.')
+            for resp in subscribeResps:
+                if not self.running:  # 检查运行状态
+                    break
+                update_info = json.loads(resp.body)
+                if update_info['game_status'] == GameStatus.LOBBY.value:
+                    pass
+                else:
+                    RefreshScreen(**update_info)
+        except Exception as ex:
+            if self.running:  # 只在正常运行时打印错误
+                print('Error in message listener:', str(ex))
 
     def sendMessage(self, action, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         msg = {

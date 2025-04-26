@@ -74,6 +74,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     self._broadcast() 
                     return self._response(1, 200, json.dumps('Login'))
             if body['action'] == LobbyAction.LOGOUT.value:
+                username = body['arg1']
                 self.users.pop(username)
                 self._broadcast()
                 return self._response(1, 200, json.dumps('Logout'))

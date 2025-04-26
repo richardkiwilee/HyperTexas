@@ -13,12 +13,12 @@ class GameStatus(Enum):
     GAME_END = 10                 # 有玩家出局 游戏结束 等待所有玩家确认
 
 class LobbyAction(Enum):
-    LOGIN = 1
-    LOGOUT = 2
-    READY = 3
-    CANCEL = 4
-    START_GAME = 5
-    KICK = 6
+    LOGIN = 'login'
+    LOGOUT = 'logout'
+    READY = 'ready'
+    CANCEL = 'cancel'
+    START_GAME = 'start_game'
+    KICK = 'kick'
 
 class TurnAction(Enum):
     PASS = 0
