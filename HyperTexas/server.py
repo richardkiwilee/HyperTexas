@@ -65,6 +65,10 @@ class LobbyServicer(rpc.LobbyServicer):
         body = json.loads(request.body)
         logger.info('Receive from {}: {}'.format(sender, body))
         
+        # 强制刷新功能
+        if body['action'] == LobbyAction.SYNC.value:
+            self._broadcast()
+            return self._response(1, 200, json.dumps(self._broadcast()))
         # 大厅状态
         if self.gm.game_status == GameStatus.LOBBY.value:
             if body['action'] == LobbyAction.LOGIN.value:

@@ -101,6 +101,8 @@ class Client:
                     self.running = False  # 设置运行状态为False
                     os._exit(0)  # 强制结束所有线程
                     break
+                if action == 'sync':
+                    self.sendMessage(LobbyAction.SYNC.value, self.username, arg2, arg3, arg4, arg5)
                 # 根据游戏状态处理不同的命令
                 if self.table_info.get('game_status') == GameStatus.LOBBY.value:
                     if action == LobbyAction.READY.value:

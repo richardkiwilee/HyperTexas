@@ -8,6 +8,7 @@ class GameStatus(Enum):
 class LobbyAction(Enum):
     LOGIN = 'login'
     LOGOUT = 'logout'
+    SYNC = 'sync'
     READY = 'ready'
     CANCEL = 'cancel'
     START_GAME = 'start'
