@@ -33,10 +33,10 @@ class Client:
         if loginResp.status != 200:
             print('Failed to login lobby: {}'.format(loginResp.msg))
             return
-        # 初始化lobby
-        RefreshScreen(json.loads(loginResp.body))
         self.listening_thread = threading.Thread(target=self.__listen_for_messages, daemon=True)
         self.listening_thread.start()
+        # 初始化lobby
+        self.sendMessage(LobbyAction.SYNC.value, self.username, None, None, None, None)
         self.input_thread = threading.Thread(target=self.add_input, daemon=True)
         self.input_thread.start()
 
@@ -106,6 +106,7 @@ class Client:
                 # 根据游戏状态处理不同的命令
                 if self.table_info.get('game_status') == GameStatus.LOBBY.value:
                     if action == LobbyAction.READY.value:
+                        print(self.table_info)
                         self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
                     if action == LobbyAction.CANCEL.value:
                         self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
