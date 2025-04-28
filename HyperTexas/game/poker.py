@@ -119,27 +119,27 @@ class Poker:
             elif info['Color'] == Poker_Color_Diamond:
                 color = '[red]♦[/red]'
             elif info['Color'] == Poker_Color_Club:
-                color = '[black]♣[/black]'
+                color = '[blue]♣[/blue]'
             elif info['Color'] == Poker_Color_Plum:
-                color = '[black]♠[/black]'
+                color = '[blue]♠[/blue]'
         else:
             color = '?'
         if info['Material'] == Poker_Material_Universal:
-            material = '[bright_yellow]<万能>[/bright_yellow]'
+            material = '<万能>'
         elif info['Material'] == Poker_Material_Gold:
-            material = '[yellow]<黄金>[/yellow]'
+            material = '<黄金>'
         elif info['Material'] == Poker_Material_Glass:
-            material = '[cyan]<玻璃>[/cyan]'
+            material = '<玻璃>'
         elif info['Material'] == Poker_Material_Iron:
-            material = '[grey]<钢铁>[/grey]'
+            material = '<钢铁>'
         elif info['Material'] == Poker_Material_Stone:
-            material = '[white]<石头>[/white]'
+            material = '<石头>'
         elif info['Material'] == Poker_Material_Lucky:
-            material = '[green]<幸运>[/green]'
+            material = '<幸运>'
         elif info['Material'] == Poker_Material_Chip:
-            material = '[magenta]<筹码>[/magenta]'
+            material = '<筹码>'
         elif info['Material'] == Poker_Material_Magnification:
-            material = '[blue]<倍率>[/blue]'
+            material = '<倍率>'
         else:
             material = ''
         if info['Wax'] == Poker_Wax_Gold:
