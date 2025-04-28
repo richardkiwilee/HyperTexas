@@ -124,7 +124,7 @@ class LobbyServicer(rpc.LobbyServicer):
                         for i in range(2):
                             _ = self.gm.deck.Draw()
                             _.setVisible(player.username)
-                            player.hand_cards.append(_)
+                            player.pokers.append(_)
                         pass
                 else:
                     return self._response(1, 400, json.dumps('Not host'))

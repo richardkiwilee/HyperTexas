@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.console import Group
 from rich.layout import Layout
 from rich.panel import Panel
-from rich.box import SQUARE, DOUBLE_EDGE, Box
+from rich.box import SQUARE, DOUBLE_EDGE, Box, HEAVY_HEAD, HORIZONTALS
 from rich import box
 from rich.columns import Columns
 from rich.padding import Padding
@@ -16,26 +16,7 @@ except:
     from game_enum import GameStatus
     from poker import Poker
 
-test_dict = {'game_status': 'game', 'current_player_index': 0, 
-            'players': [
-                {'username': 'host', 'chip': 300000, 'pokers': [], 
-                'hand_cards': [
-                    {'id': 25, 'Number': 'Number_7', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 
-                    'visible': {'number': ['host'], 'color': ['host']}}, 
-                    {'id': 12, 'Number': 'Number_3', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0,
-                     'visible': {'number': ['host'], 'color': ['host']}}
-                     ], 
-                     'effects': [], 'skill': None}, 
-                     {'username': 'player1', 'chip': 300000, 'pokers': [], 
-                     'hand_cards': [
-                        {'id': 13, 'Number': 'Number_4', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 
-                        'change': 0, 'visible': {'number': ['player1'], 'color': ['player1']}}, 
-                        {'id': 26, 'Number': 'Number_7', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 
-                        'change': 0, 'visible': {'number': ['player1'], 'color': ['player1']}}
-                        ], 
-                        'effects': [], 'skill': None}], 
-                        'public_cards': [], 'last_used_cards': [], 
-                        'deck': [{'id': 11, 'Number': 'Number_3', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 10, 'Number': 'Number_3', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 7, 'Number': 'Number_2', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 16, 'Number': 'Number_4', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 35, 'Number': 'Number_9', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 1, 'Number': 'Number_A', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 32, 'Number': 'Number_8', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 24, 'Number': 'Number_6', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 15, 'Number': 'Number_4', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 6, 'Number': 'Number_2', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 33, 'Number': 'Number_9', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 42, 'Number': 'Number_J', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 34, 'Number': 'Number_9', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 31, 'Number': 'Number_8', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 39, 'Number': 'Number_10', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 47, 'Number': 'Number_Q', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 36, 'Number': 'Number_9', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 51, 'Number': 'Number_K', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 38, 'Number': 'Number_10', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 45, 'Number': 'Number_Q', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 44, 'Number': 'Number_J', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 18, 'Number': 'Number_5', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 40, 'Number': 'Number_10', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 21, 'Number': 'Number_6', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 9, 'Number': 'Number_3', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 20, 'Number': 'Number_5', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 22, 'Number': 'Number_6', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 52, 'Number': 'Number_K', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 8, 'Number': 'Number_2', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 17, 'Number': 'Number_5', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 5, 'Number': 'Number_2', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 28, 'Number': 'Number_7', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 4, 'Number': 'Number_A', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 49, 'Number': 'Number_K', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 46, 'Number': 'Number_Q', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 14, 'Number': 'Number_4', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 3, 'Number': 'Number_A', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 41, 'Number': 'Number_J', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 48, 'Number': 'Number_Q', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 29, 'Number': 'Number_8', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 23, 'Number': 'Number_6', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 30, 'Number': 'Number_8', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 43, 'Number': 'Number_J', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 50, 'Number': 'Number_K', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 2, 'Number': 'Number_A', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 27, 'Number': 'Number_7', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 19, 'Number': 'Number_5', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 37, 'Number': 'Number_10', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}]}
+test_dict = {'game_status': 'game', 'current_player_index': 0, 'players': [{'username': 'host', 'chip': 300000, 'pokers': [{'id': 22, 'Number': 'Number_6', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['host'], 'color': ['host']}}, {'id': 36, 'Number': 'Number_9', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['host'], 'color': ['host']}}], 'hand_cards': [], 'effects': [], 'skill': None}, {'username': 'player1', 'chip': 300000, 'pokers': [{'id': 3, 'Number': 'Number_A', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['player1'], 'color': ['player1']}}, {'id': 31, 'Number': 'Number_8', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['player1'], 'color': ['player1']}}], 'hand_cards': [], 'effects': [], 'skill': None}], 'public_cards': [], 'last_used_cards': [], 'deck': [{'id': 26, 'Number': 'Number_7', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 15, 'Number': 'Number_4', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 50, 'Number': 'Number_K', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 48, 'Number': 'Number_Q', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 1, 'Number': 'Number_A', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 9, 'Number': 'Number_3', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 47, 'Number': 'Number_Q', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 33, 'Number': 'Number_9', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 52, 'Number': 'Number_K', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 29, 'Number': 'Number_8', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 21, 'Number': 'Number_6', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 34, 'Number': 'Number_9', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 30, 'Number': 'Number_8', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 11, 'Number': 'Number_3', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 8, 'Number': 'Number_2', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 17, 'Number': 'Number_5', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 12, 'Number': 'Number_3', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 7, 'Number': 'Number_2', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 40, 'Number': 'Number_10', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 38, 'Number': 'Number_10', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 42, 'Number': 'Number_J', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 43, 'Number': 'Number_J', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 6, 'Number': 'Number_2', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 41, 'Number': 'Number_J', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 19, 'Number': 'Number_5', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 10, 'Number': 'Number_3', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 45, 'Number': 'Number_Q', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 27, 'Number': 'Number_7', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 24, 'Number': 'Number_6', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 46, 'Number': 'Number_Q', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 44, 'Number': 'Number_J', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 18, 'Number': 'Number_5', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 32, 'Number': 'Number_8', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 5, 'Number': 'Number_2', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 20, 'Number': 'Number_5', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 23, 'Number': 'Number_6', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 35, 'Number': 'Number_9', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 16, 'Number': 'Number_4', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 39, 'Number': 'Number_10', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 14, 'Number': 'Number_4', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 49, 'Number': 'Number_K', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 4, 'Number': 'Number_A', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 37, 'Number': 'Number_10', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 28, 'Number': 'Number_7', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 2, 'Number': 'Number_A', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 51, 'Number': 'Number_K', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 13, 'Number': 'Number_4', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 25, 'Number': 'Number_7', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}]}
 
 lobby_dict = {'game_status': 'lobby',
               'ready_status': {'player1': True, 'player2': False}
@@ -58,46 +39,37 @@ def format_poker_card(player_name: str, card: dict, index: int) -> str:
     return f"[{index}] {Poker.format(player_name, card)}"
 
 def create_player_table(myname, players: list) -> Table:
-    table = Table(show_header=True, box=box.SIMPLE_HEAVY)
-    table.add_column("编号", justify="center", style="cyan", no_wrap=True)
-    table.add_column("名字", style="magenta")
-    table.add_column("分数", justify="right", style="green")
-    table.add_column("手牌", style="yellow", width=15)
-    table.add_column("技能", style="blue", width=15)
-    
-    # 添加行分隔符
-    table.show_lines = True
-    
+    table = Table(box=box.HORIZONTALS, show_header=True, header_style="bold", show_edge=True, padding=(0,1))
+    table.add_column("编号", justify="center", no_wrap=True)
+    table.add_column("名字")
+    table.add_column("技能")
+    table.add_column("分数", justify="right")
+    table.add_column("底牌")
+    table.add_column("手牌")
+
     for i, player in enumerate(players):
-        # 格式化玩家编号
-        player_id = f"P{i + 1}"
-        
-        # 格式化手牌列表
+        # 格式化底牌列表
         poker_cards = []
-        # 显示手牌
+        for j, card in enumerate(player['pokers']):
+            poker_cards.append(format_poker_card(myname, card, j + 1))
+        poker_text = "\n".join(poker_cards) if poker_cards else ""
+
+        # 格式化手牌列表
+        hand_cards = []
         for j, card in enumerate(player['hand_cards']):
-            poker_cards.append(format_poker_card(myname, card, j + 1))
-        # 显示场上的牌
-        for j, card in enumerate(player['pokers'], start=len(player['hand_cards'])):
-            poker_cards.append(format_poker_card(myname, card, j + 1))
-        poker_text = "\n".join(poker_cards)
-        print(poker_text)
-        # 格式化技能卡
-        # 假设每个玩家有2张扑克牌，所以技能卡的索引从3开始
-        skill_cards = []
-        if isinstance(player['skill'], (list, tuple)):
-            for j, skill in enumerate(player['skill']):
-                skill_cards.append(f"[{j + len(player['pokers']) + len(player['hand_cards']) + 1}] {skill}")
-        else:
-            skill_cards.append(f"[{len(player['pokers']) + len(player['hand_cards']) + 1}] {player['skill']}")
-        skill_text = "\n".join(skill_cards)
-        
+            hand_cards.append(format_poker_card(myname, card, j + 1))
+        hand_text = "\n".join(hand_cards) if hand_cards else ""
+
+        # 格式化技能
+        skill_text = player['skill'] if player['skill'] else ""
+
         table.add_row(
-            player_id,
+            str(i + 1),
             player['username'],
+            skill_text,
             str(player['chip']),
             poker_text,
-            skill_text
+            hand_text
         )
     
     return table
@@ -198,9 +170,9 @@ def RefreshScreen(myname, info: dict):
         table = Table(title="游戏大厅")
         
         # 添加列
-        table.add_column("玩家编号", justify="center", style="cyan")
-        table.add_column("玩家名字", style="magenta")
-        table.add_column("准备状态", justify="center", style="green")
+        table.add_column("玩家编号", justify="center")
+        table.add_column("玩家名字")
+        table.add_column("准备状态", justify="center")
         
         # 添加玩家数据
         for idx, (player_name, ready_status) in enumerate(info.get('ready_status', {}).items(), start=1):
