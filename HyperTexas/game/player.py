@@ -34,7 +34,7 @@ class PlayerInfo:
             'username': self.username,
             'chip': self.chip,
             'pokers': [i.to_dict() for i in self.pokers],
-            'hand_cards': self.hand_cards,
+            'hand_cards': [i.to_dict() for i in self.hand_cards],
             'effects': self.effects,
             'skill': self.skill
         }

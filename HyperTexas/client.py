@@ -8,7 +8,7 @@ import string
 import argparse
 import json
 import os
-from HyperTexas.game.enum import GameStatus, LobbyAction
+from HyperTexas.game.game_enum import GameStatus, LobbyAction
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
 from HyperTexas.game.manager import Manager
@@ -142,7 +142,7 @@ class Client:
                 if not self.running:  # 检查运行状态
                     break
                 self.table_info = json.loads(resp.body)
-                RefreshScreen(self.table_info)
+                RefreshScreen(self.username, self.table_info)
         except Exception as ex:
             if self.running:  # 只在正常运行时打印错误
                 print('Error in message listener:', str(ex))
@@ -168,10 +168,3 @@ def main(address='localhost', port=50051, username=None):
     except KeyboardInterrupt:
         print('Bye')
 
-
-if __name__ == '__main__':
-    # try:
-    #     main()
-    # except KeyboardInterrupt:
-    #     print('Bye')
-    RefreshScreen(test_dict)

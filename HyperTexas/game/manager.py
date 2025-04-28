@@ -3,7 +3,7 @@ from HyperTexas.game.deck import Deck, ConsumeDeck
 from HyperTexas.game.character import *
 from HyperTexas.game.poker import *
 import random
-from HyperTexas.game.enum import *
+from HyperTexas.game.game_enum import *
 
 
 class Manager:

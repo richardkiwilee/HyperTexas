@@ -60,6 +60,12 @@ class Poker:
         self.change = info['change']
         self.visible = info['visible']
 
+    def setVisible(self, user):
+        if user not in self.visible['number']:
+            self.visible['number'].append(user)
+        if user not in self.visible['color']:
+            self.visible['color'].append(user)
+
     def ResetVisible(self):
         self.visible = {'number': [], 'color': []}
 
@@ -73,3 +79,77 @@ class Poker:
             'change': self.change,
             'visible': self.visible
         }
+
+    @staticmethod
+    def format(user, info):
+        if user in info['visible']['number']:
+            if info['Number'] == Poker_Number_A:
+                number = 'A'
+            elif info['Number'] == Poker_Number_2:
+                number = '2'
+            elif info['Number'] == Poker_Number_3:
+                number = '3'
+            elif info['Number'] == Poker_Number_4:
+                number = '4'
+            elif info['Number'] == Poker_Number_5:
+                number = '5'
+            elif info['Number'] == Poker_Number_6:
+                number = '6'
+            elif info['Number'] == Poker_Number_7:
+                number = '7'
+            elif info['Number'] == Poker_Number_8:
+                number = '8'
+            elif info['Number'] == Poker_Number_9:
+                number = '9'
+            elif info['Number'] == Poker_Number_10:
+                number = '10'
+            elif info['Number'] == Poker_Number_J:
+                number = 'J'
+            elif info['Number'] == Poker_Number_Q:
+                number = 'Q'
+            elif info['Number'] == Poker_Number_K:
+                number = 'K'
+        else:
+            number = '?'
+            if info['change']:
+                number += f"+{info['change']}"
+        if user in info['visible']['color']:
+            if info['Color'] == Poker_Color_Heart:
+                color = '[red]♥[/red]'
+            elif info['Color'] == Poker_Color_Diamond:
+                color = '[red]♦[/red]'
+            elif info['Color'] == Poker_Color_Club:
+                color = '[black]♣[/black]'
+            elif info['Color'] == Poker_Color_Plum:
+                color = '[black]♠[/black]'
+        else:
+            color = '?'
+        if info['Material'] == Poker_Material_Universal:
+            material = '[bright_yellow]<万能>[/bright_yellow]'
+        elif info['Material'] == Poker_Material_Gold:
+            material = '[yellow]<黄金>[/yellow]'
+        elif info['Material'] == Poker_Material_Glass:
+            material = '[cyan]<玻璃>[/cyan]'
+        elif info['Material'] == Poker_Material_Iron:
+            material = '[grey]<钢铁>[/grey]'
+        elif info['Material'] == Poker_Material_Stone:
+            material = '[white]<石头>[/white]'
+        elif info['Material'] == Poker_Material_Lucky:
+            material = '[green]<幸运>[/green]'
+        elif info['Material'] == Poker_Material_Chip:
+            material = '[magenta]<筹码>[/magenta]'
+        elif info['Material'] == Poker_Material_Magnification:
+            material = '[blue]<倍率>[/blue]'
+        else:
+            material = ''
+        if info['Wax'] == Poker_Wax_Gold:
+            wax = '[yellow]⚪[/yellow]'
+        elif info['Wax'] == Poker_Wax_Red:
+            wax = '[red]⚪[/red]'
+        elif info['Wax'] == Poker_Wax_Blue:
+            wax = '[blue]⚪[/blue]'
+        elif info['Wax'] == Poker_Wax_Purple:
+            wax = '[magenta]⚪[/magenta]'
+        else:
+            wax = ''
+        return number + color + material + wax

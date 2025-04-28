@@ -4,7 +4,6 @@ import queue
 import random
 import logging
 import json
-from enum import Enum
 from urllib.parse import uses_fragment
 import grpc
 import HyperTexas.protocol.service_pb2 as pb2
@@ -13,7 +12,7 @@ from HyperTexas.game.manager import Manager
 from concurrent.futures import ThreadPoolExecutor
 from HyperTexas.action import *
 import threading
-from HyperTexas.game.enum import *
+from HyperTexas.game.game_enum import *
 from HyperTexas.game.player import PlayerInfo
 
 
@@ -122,6 +121,10 @@ class LobbyServicer(rpc.LobbyServicer):
                     # 发初始手牌
                     for player in self.gm.player_order:
                         # TODO: 实现发牌逻辑
+                        for i in range(2):
+                            _ = self.gm.deck.Draw()
+                            _.setVisible(player.username)
+                            player.hand_cards.append(_)
                         pass
                 else:
                     return self._response(1, 400, json.dumps('Not host'))
@@ -252,17 +255,16 @@ class LobbyServicer(rpc.LobbyServicer):
         data['game_status'] = self.gm.game_status
         if data['game_status'] == GameStatus.LOBBY.value:
             ready_status = dict()
-            print(self.users)
             for user, _data in self.users.items():
                 ready_status[user] = _data['ready']
             data['ready_status'] = ready_status
         if data['game_status'] == GameStatus.GAME.value:
             data['current_player_index'] = self.gm.current_player_index
             data['players'] = [p.to_dict() for p in self.gm.player_order] # 
-            print(data['players'])
             data['public_cards'] = self.gm.public_cards
             data['last_used_cards'] = self.gm.last_used_cards
             data['deck'] = self.gm.deck.dump()
+        print(data)
         _obj = pb2.Broadcast(
             sequence=self.seq,
             msgtype=0,

@@ -1,3 +1,4 @@
+import imp
 from rich.table import Table
 from rich.console import Console
 from rich.console import Group
@@ -8,27 +9,14 @@ from rich import box
 from rich.columns import Columns
 from rich.padding import Padding
 import os
-from HyperTexas.game.enum import GameStatus
+try:
+    from HyperTexas.game.game_enum import GameStatus
+    from HyperTexas.game.poker import Poker
+except:
+    from game_enum import GameStatus
+    from poker import Poker
 
-test_dict = {'game_status':'playing',
-            'current_player_index': 0,
-            'players': [{'username': 'Player 1', 'chip': 1000, 'pokers': [{'id': 1, 'Number': 13, 'Color': 1}, {'id': 2, 'Number': 12, 'Color': 2}], 
-                        'hand_cards': [0x01], 'effects': [0x01], 'skill': "快速行动"}, 
-                        {'username': 'Player 2', 'chip': 2000, 'pokers': [{'id': 3, 'Number': 11, 'Color': 3}, {'id': 4, 'Number': 10, 'Color': 4}], 
-                        'hand_cards': [0x02], 'effects': [0x02], 'skill': "防御姿态"}],
-            'public_cards': [{'id': 5, 'Number': 1, 'Color': 1}, {'id': 6, 'Number': 2, 'Color': 2}],
-            'last_used_cards': [
-                {'id': 7, 'Number': 7, 'Color': 1, 'player': 'Player 1'},
-                {'id': 8, 'Number': 8, 'Color': 2, 'player': 'Player 2'},
-                {'id': 9, 'Number': 9, 'Color': 3, 'player': 'Player 1'}
-            ],
-            'deck': [
-                {'id': 10, 'Number': 3, 'Color': 1},
-                {'id': 11, 'Number': 4, 'Color': 2},
-                {'id': 12, 'Number': 5, 'Color': 3}
-            ],
-            'game_log': ['Player 1 使用了 红桃K', 'Player 2 使用了 方块Q']
-}
+test_dict = {'game_status': 'game', 'current_player_index': 0, 'players': [{'username': 'host', 'chip': 300000, 'pokers': [], 'hand_cards': [{'id': 25, 'Number': 'Number_7', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['host'], 'color': ['host']}}, {'id': 12, 'Number': 'Number_3', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['host'], 'color': ['host']}}], 'effects': [], 'skill': None}, {'username': 'player1', 'chip': 300000, 'pokers': [], 'hand_cards': [{'id': 13, 'Number': 'Number_4', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['player1'], 'color': ['player1']}}, {'id': 26, 'Number': 'Number_7', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['player1'], 'color': ['player1']}}], 'effects': [], 'skill': None}], 'public_cards': [], 'last_used_cards': [], 'deck': [{'id': 11, 'Number': 'Number_3', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 10, 'Number': 'Number_3', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 7, 'Number': 'Number_2', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 16, 'Number': 'Number_4', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 35, 'Number': 'Number_9', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 1, 'Number': 'Number_A', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 32, 'Number': 'Number_8', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 24, 'Number': 'Number_6', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 15, 'Number': 'Number_4', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 6, 'Number': 'Number_2', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 33, 'Number': 'Number_9', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 42, 'Number': 'Number_J', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 34, 'Number': 'Number_9', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 31, 'Number': 'Number_8', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 39, 'Number': 'Number_10', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 47, 'Number': 'Number_Q', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 36, 'Number': 'Number_9', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 51, 'Number': 'Number_K', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 38, 'Number': 'Number_10', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 45, 'Number': 'Number_Q', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 44, 'Number': 'Number_J', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 18, 'Number': 'Number_5', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 40, 'Number': 'Number_10', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 21, 'Number': 'Number_6', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 9, 'Number': 'Number_3', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 20, 'Number': 'Number_5', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 22, 'Number': 'Number_6', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 52, 'Number': 'Number_K', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 8, 'Number': 'Number_2', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 17, 'Number': 'Number_5', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 5, 'Number': 'Number_2', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 28, 'Number': 'Number_7', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 4, 'Number': 'Number_A', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 49, 'Number': 'Number_K', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 46, 'Number': 'Number_Q', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 14, 'Number': 'Number_4', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 3, 'Number': 'Number_A', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 41, 'Number': 'Number_J', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 48, 'Number': 'Number_Q', 'Color': 'Color_Plum', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 29, 'Number': 'Number_8', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 23, 'Number': 'Number_6', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 30, 'Number': 'Number_8', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 43, 'Number': 'Number_J', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 50, 'Number': 'Number_K', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 2, 'Number': 'Number_A', 'Color': 'Color_Diamond', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 27, 'Number': 'Number_7', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 19, 'Number': 'Number_5', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}, {'id': 37, 'Number': 'Number_10', 'Color': 'Color_Heart', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}}]}
 
 lobby_dict = {'game_status': 'lobby',
               'ready_status': {'player1': True, 'player2': False}
@@ -47,12 +35,8 @@ def create_card_slot(index: int, card_info: dict = None) -> Panel:
         box_style = box.DOUBLE_EDGE
     return Panel(content, title=f"", box=box_style, width=8, height=5)
 
-def format_poker_card(card: dict, index: int) -> str:
-    color_map = {1: '', 2: '', 3: '', 4: ''}
-    number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
-    color = color_map.get(card['Color'], '?')
-    number = number_map.get(card['Number'], str(card['Number']))
-    return f"[{index}] {color}{number}"
+def format_poker_card(player_name: str, card: dict, index: int) -> str:
+    return f"[{index}] {Poker.format(player_name, card)}"
 
 def create_player_table(players: list) -> Table:
     table = Table(show_header=True, box=box.SIMPLE_HEAVY)
@@ -72,7 +56,7 @@ def create_player_table(players: list) -> Table:
         # 格式化手牌列表
         poker_cards = []
         for j, card in enumerate(player['pokers']):
-            poker_cards.append(format_poker_card(card, j + 1))
+            poker_cards.append(format_poker_card(player.username, card, j + 1))
         poker_text = "\n".join(poker_cards)
         
         # 格式化技能卡
@@ -95,7 +79,7 @@ def create_player_table(players: list) -> Table:
     
     return table
 
-def format_card_list(cards: list, title: str, max_items: int = 3) -> Panel:
+def format_card_list(myname, cards: list, title: str, max_items: int = 3) -> Panel:
     formatted_cards = []
     for i, card in enumerate(cards[:max_items]):
         if 'player' in card:  # 用于显示最后使用的卡
@@ -109,7 +93,7 @@ def format_card_list(cards: list, title: str, max_items: int = 3) -> Panel:
             number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
             color = color_map.get(card['Color'], '?')
             number = number_map.get(card['Number'], str(card['Number']))
-            formatted_cards.append(f"{color}{number}")
+            formatted_cards.append(Poker.format(myname, card))
     
     # 如果卡片数量不足，用空行填充
     while len(formatted_cards) < max_items:
@@ -117,7 +101,7 @@ def format_card_list(cards: list, title: str, max_items: int = 3) -> Panel:
     
     return Panel("\n".join(formatted_cards), title=title, width=20, box=box.SQUARE)
 
-def RefreshScreen(info: dict):
+def RefreshScreen(myname, info: dict):
     _ = os.system('cls')
     console = Console()
     console.clear()
@@ -158,8 +142,8 @@ def RefreshScreen(info: dict):
             card_slots_list.append(create_card_slot(i + 1, card_info))
         
         # 创建卡组和使用记录面板
-        deck_panel = format_card_list(info['deck'], "抽牌堆顶部")
-        used_panel = format_card_list(info['last_used_cards'], "最近使用的卡")
+        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部")
+        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡")
         
         # 创建玩家表格
         player_table = create_player_table(info['players'])
@@ -213,4 +197,4 @@ def RefreshScreen(info: dict):
         pass
 
 if __name__ == '__main__':
-    RefreshScreen(test_dict)
+    RefreshScreen('player1', test_dict)
