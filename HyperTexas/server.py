@@ -111,6 +111,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     self.gm.game_status = GameStatus.GAME.value
                     # 洗牌
                     self.gm.deck.shuffle()
+                    self.gm.consume.shuffle()
                     # 随机排序玩家位置
                     for k,v in self.users.items():
                         player = PlayerInfo()
@@ -125,6 +126,10 @@ class LobbyServicer(rpc.LobbyServicer):
                             _ = self.gm.deck.Draw()
                             _.setVisible(player.username)
                             player.pokers.append(_)
+                        for i in range(3):
+                            _ = self.gm.consume.Draw()
+                            _.setVisible(player.username)
+                            player.hand_cards.append(_)
                         pass
                 else:
                     return self._response(1, 400, json.dumps('Not host'))

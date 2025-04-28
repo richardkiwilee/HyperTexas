@@ -1,5 +1,5 @@
 from HyperTexas.game.poker import Poker, Poker_Colors, Poker_Numbers
-from HyperTexas.game.card import Card
+from HyperTexas.game.card import *
 import random
 
 class Deck:
@@ -39,7 +39,17 @@ class Deck:
 class ConsumeDeck:
     def __init__(self):
         self.cards = []
-        
+        for i in range(0, 150):
+            try:
+                _ = eval(f'Card_{i}()')
+                if _.name == '':
+                    continue
+                self.cards.append(_)
+                self.cards.append(_)
+                self.cards.append(_)
+                self.cards.append(_)
+            except Exception as e:
+                pass
         
     def shuffle(self):
         random.shuffle(self.cards)

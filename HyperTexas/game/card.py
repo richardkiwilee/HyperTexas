@@ -11,23 +11,39 @@ class Card:
         self.id = id
         self.name = name
         self.desc = desc
-        self.visible: Set[Any] = set()
+        self.visible = []
 
     @staticmethod
     def call(mgr: 'Manager', arg1: Any, arg2: Any, arg3: Any, arg4: Any, arg5: Any) -> None:
         pass
 
+    def setVisible(self, user):
+        if user not in self.visible:
+            self.visible.append(user)
+
+    def ResetVisible(self):
+        self.visible = []
+
     def from_dict(self, d: dict):
+        self.id = d.get('id')
         self.name = d.get('name')
         self.desc = d.get('desc')
         self.visible = d.get('visible')
 
     def to_dict(self):
         return {
+            'id': self.id,
             'name': self.name,
             'desc': self.desc,
             'visible': self.visible
         }
+
+    @staticmethod
+    def format(user, info):
+        if user in info['visible']:
+            return info['name']
+        return '?'
+
 
 class Card_1(Card):
     def __init__(self) -> None:
