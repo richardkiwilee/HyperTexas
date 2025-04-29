@@ -8,7 +8,7 @@ import string
 import argparse
 import json
 import os
-from HyperTexas.game.game_enum import GameStatus, LobbyAction
+from HyperTexas.game.game_enum import GameStatus, LobbyAction, TurnAction
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
 from HyperTexas.game.manager import Manager
@@ -117,6 +117,8 @@ class Client:
                         self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
                     else:
                         print('In game, available commands: skill, card, exit')
+                if self.table_info.get('game_status') == GameStatus.WAIT_PLAY.value:
+                    self.sendMessage(TurnAction.PLAY_CARD.value, arg1, arg2, arg3, arg4, arg5)
                 if self.table_info.get('game_status') == GameStatus.SCORE.value:
                     pass
                     

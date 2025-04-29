@@ -3,6 +3,7 @@ from enum import Enum
 class GameStatus(Enum):
     LOBBY = 'lobby'                     # 大厅内 游戏未开始
     GAME = 'game'                      # 游戏进行中
+    WAIT_PLAY = 'wait_play'            # 等待玩家出牌
     SCORE = 'score'                     # 计分环节
 
 class LobbyAction(Enum):
@@ -19,6 +20,7 @@ class TurnAction(Enum):
     USE_CARD = 'card'
     USE_SKILL = 'skill'
     FOLD = 'fold'
+    PLAY_CARD = 'play'
 
 # class BroadcastType(Enum):
 #     HEARTBEAT = 0

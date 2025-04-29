@@ -202,25 +202,31 @@ class LobbyServicer(rpc.LobbyServicer):
                     self._broadcast()
                     return self._response(1, 200, json.dumps('Game Started'))
                 if len(self.gm.public_cards) == 5:
-                    # 计分
-                    self.gm.game_status = GameStatus.SCORE.value
+                    # 进入等待出牌的阶段
+                    self.gm.game_status = GameStatus.WAIT_PLAY.value
                     self._broadcast()
                     return self._response(1, 200, json.dumps('Game Started'))
-        
+        elif self.gm.game_status == GameStatus.WAIT_PLAY.value:
+            if body['action'] == TurnAction.PLAY_CARD.value:
+                # 处理玩家出牌
+                if self._round_complete():
+                    # TODO: 实现计分逻辑
+                    self.gm.game_status == GameStatus.SCORE.value
+                else:
+                    self._next_player()
+                self._broadcast()
+                return self._response(1, 200, json.dumps('Turn Completed'))
         # 计分状态
         elif self.gm.game_status == GameStatus.SCORE.value:
-            # 计算得分
-            # TODO: 实现计分逻辑
-            
-            # 重置游戏状态
+            # TODO: 等待所有玩家确认
+            # TODO: 重置游戏状态
             self.gm.game_status = GameStatus.LOBBY.value
             self.gm.public_cards = []
             self.gm.current_player_index = 0
             
             # 重置玩家准备状态
             for user in self.users.values():
-                user['ready'] = False
-            
+                user['ready'] = False            
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
         self._broadcast()
