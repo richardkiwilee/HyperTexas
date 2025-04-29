@@ -32,6 +32,9 @@ logger.addHandler(console_handler)
 class LobbyServicer(rpc.LobbyServicer):
     def __init__(self):
         self.gm = Manager()
+        logger.info(f'Manager initialized')
+        logger.info(f'Manager Poker Deck Count: {len(self.gm.deck.cards)}')
+        logger.info(f'Manager Consume Deck Count: {len(self.gm.consume.cards)}')
         self.gm.game_status = GameStatus.LOBBY.value
         self.host = None
         self.users = dict()

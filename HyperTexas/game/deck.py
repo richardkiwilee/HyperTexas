@@ -41,13 +41,13 @@ class ConsumeDeck:
         self.cards = []
         for i in range(0, 150):
             try:
-                _ = eval(f'Card_{i}()')
-                if _.name == '':
-                    continue
-                self.cards.append(_)
-                self.cards.append(_)
-                self.cards.append(_)
-                self.cards.append(_)
+                for j in range(0, 4):
+                    _ = eval(f'Card_{i}()')
+                    if _.name == '':
+                        continue
+                    if not _.enabled:
+                        break
+                    self.cards.append(_)
             except Exception as e:
                 pass
         

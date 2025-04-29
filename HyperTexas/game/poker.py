@@ -51,6 +51,61 @@ class Poker:
         # 可见性 仅记录数字和花色. 材质和蜡封对所有人可见
         self.visible = {'number': [], 'color': []}
 
+    def plus(self):
+        if self.Number == Poker_Number_A:
+            self.Number = Poker_Number_2
+            self.change += 1
+            return
+        if self.Number == Poker_Number_2:
+            self.Number = Poker_Number_3
+            self.change += 1
+            return
+        if self.Number == Poker_Number_3:
+            self.Number = Poker_Number_4
+            self.change += 1
+            return
+        if self.Number == Poker_Number_4:
+            self.Number = Poker_Number_5
+            self.change += 1
+            return
+        if self.Number == Poker_Number_5:
+            self.Number = Poker_Number_6
+            self.change += 1
+            return
+        if self.Number == Poker_Number_6:
+            self.Number = Poker_Number_7
+            self.change += 1
+            return
+        if self.Number == Poker_Number_7:
+            self.Number = Poker_Number_8
+            self.change += 1
+            return
+        if self.Number == Poker_Number_8:
+            self.Number = Poker_Number_9
+            self.change += 1
+            return
+        if self.Number == Poker_Number_9:
+            self.Number = Poker_Number_10
+            self.change += 1
+            return
+        if self.Number == Poker_Number_10:
+            self.Number = Poker_Number_J
+            self.change += 1
+            return
+        if self.Number == Poker_Number_J:
+            self.Number = Poker_Number_Q
+            self.change += 1
+            return
+        if self.Number == Poker_Number_Q:
+            self.Number = Poker_Number_K
+            self.change += 1
+            return
+        if self.Number == Poker_Number_K:
+            self.Number = Poker_Number_A
+            self.change += 1
+            return
+        
+
     def from_dict(self, info: dict):
         self.id = info['id']
         self.Number = info['Number']      # 数字
