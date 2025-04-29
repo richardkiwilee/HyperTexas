@@ -27,11 +27,7 @@ lobby_dict = {'game_status': 'lobby',
 
 def create_card_slot(index: int, card_info: dict = None) -> Panel:
     if card_info and 'Number' in card_info:
-        color_map = {1: '', 2: '', 3: '', 4: ''}
-        number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
-        color = color_map.get(card_info['Color'], '?')
-        number = number_map.get(card_info['Number'], str(card_info['Number']))
-        content = f"{color} {number}"
+        content = Poker.format_slot(card_info)
         box_style = box.SQUARE
     else:
         content = "   "

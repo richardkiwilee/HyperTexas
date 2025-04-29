@@ -153,3 +153,72 @@ class Poker:
         else:
             wax = ''
         return number + color + material + wax
+
+    @staticmethod
+    def format_slot(info):
+        if info['Number'] == Poker_Number_A:
+            number = 'A'
+        elif info['Number'] == Poker_Number_2:
+            number = '2'
+        elif info['Number'] == Poker_Number_3:
+            number = '3'
+        elif info['Number'] == Poker_Number_4:
+            number = '4'
+        elif info['Number'] == Poker_Number_5:
+            number = '5'
+        elif info['Number'] == Poker_Number_6:
+            number = '6'
+        elif info['Number'] == Poker_Number_7:
+            number = '7'
+        elif info['Number'] == Poker_Number_8:
+            number = '8'
+        elif info['Number'] == Poker_Number_9:
+            number = '9'
+        elif info['Number'] == Poker_Number_10:
+            number = '10'
+        elif info['Number'] == Poker_Number_J:
+            number = 'J'
+        elif info['Number'] == Poker_Number_Q:
+            number = 'Q'
+        elif info['Number'] == Poker_Number_K:
+            number = 'K'
+
+        if info['Color'] == Poker_Color_Heart:
+            color = '[red]♥[/red]'
+        elif info['Color'] == Poker_Color_Diamond:
+            color = '[red]♦[/red]'
+        elif info['Color'] == Poker_Color_Club:
+            color = '[blue]♣[/blue]'
+        elif info['Color'] == Poker_Color_Plum:
+            color = '[blue]♠[/blue]'
+
+        if info['Material'] == Poker_Material_Universal:
+            material = '<万能>'
+        elif info['Material'] == Poker_Material_Gold:
+            material = '<黄金>'
+        elif info['Material'] == Poker_Material_Glass:
+            material = '<玻璃>'
+        elif info['Material'] == Poker_Material_Iron:
+            material = '<钢铁>'
+        elif info['Material'] == Poker_Material_Stone:
+            material = '<石头>'
+        elif info['Material'] == Poker_Material_Lucky:
+            material = '<幸运>'
+        elif info['Material'] == Poker_Material_Chip:
+            material = '<筹码>'
+        elif info['Material'] == Poker_Material_Magnification:
+            material = '<倍率>'
+        else:
+            material = ''
+
+        if info['Wax'] == Poker_Wax_Gold:
+            wax = '[yellow]⚪[/yellow]'
+        elif info['Wax'] == Poker_Wax_Red:
+            wax = '[red]⚪[/red]'
+        elif info['Wax'] == Poker_Wax_Blue:
+            wax = '[blue]⚪[/blue]'
+        elif info['Wax'] == Poker_Wax_Purple:
+            wax = '[magenta]⚪[/magenta]'
+        else:
+            wax = ''
+        return f'{color}{material}\n{number}{wax}'
