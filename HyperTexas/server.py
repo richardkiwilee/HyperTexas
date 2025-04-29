@@ -288,7 +288,6 @@ class LobbyServicer(rpc.LobbyServicer):
             data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
             data['last_used_cards'] = self.gm.last_used_cards
             data['deck'] = self.gm.deck.dump()
-        print(data)
         _obj = pb2.Broadcast(
             sequence=self.seq,
             msgtype=0,

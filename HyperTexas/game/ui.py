@@ -9,6 +9,7 @@ from rich.box import SQUARE, DOUBLE_EDGE, Box, HEAVY_HEAD, HORIZONTALS
 from rich import box
 from rich.columns import Columns
 from rich.padding import Padding
+from rich.text import Text
 import os
 try:
     from HyperTexas.game.game_enum import GameStatus
@@ -86,6 +87,25 @@ def create_player_table(myname, players: list, info: dict) -> Table:
     
     return table
 
+def create_public_cards_area(info: dict) -> Group:
+    # 创建公共牌槽
+    card_slots = []
+    for i in range(5):
+        card_info = info['public_cards'][i] if i < len(info['public_cards']) else None
+        card_slots.append(create_card_slot(i + 1, card_info))
+    
+    # 创建编号
+    slot_numbers = []
+    for i in range(5):
+        # TODO: 不够优雅
+        slot_numbers.append(Text(f"  [{chr(96+i+1)}]   ", justify="center"))
+    
+    # 创建紧密排列的卡槽组和编号组
+    card_slots_row = Columns(card_slots, equal=True, expand=False, padding=(0, 1))
+    slot_numbers_row = Columns(slot_numbers, equal=True, expand=False, padding=(0, 1))
+    
+    return Group(card_slots_row, slot_numbers_row)
+
 def format_card_list(myname, cards: list, title: str, max_items: int = 3) -> Panel:
     formatted_cards = []
     for i, card in enumerate(cards[:max_items]):
@@ -142,35 +162,21 @@ def RefreshScreen(myname, info: dict):
             Layout(name="used_area")
         )
 
-        # 创建公共牌槽
-        card_slots_list = []
-        for i in range(5):
-            card_info = info['public_cards'][i] if i < len(info['public_cards']) else None
-            card_slots_list.append(create_card_slot(i + 1, card_info))
-        
+        public_cards_area = create_public_cards_area(info)
+        centered_public_cards = Padding(public_cards_area, (1, 30))
+        layout["top"].update(centered_public_cards)
+
+        # 创建玩家表格
+        player_table = create_player_table(myname, info['players'], info)
+
         # 创建卡组和使用记录面板
         deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部")
         used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡")
         
-        # 创建玩家表格
-        player_table = create_player_table(myname, info['players'], info)
-
         # 创建游戏记录
         log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)
 
-        # 创建紧密排列的卡槽组
-        card_slots_columns = Columns(
-            card_slots_list,
-            equal=True,
-            expand=False,
-            padding=(0, 1)  # 垂直padding为0，水平padding为1
-        )
-        
-        # 添加水平居中的padding
-        centered_card_slots = Padding(card_slots_columns, (1, 30))  # 上下padding为1，左右padding为30
-
         # 渲染布局
-        layout["top"].update(centered_card_slots)
         layout["left"].update(player_table)
         layout["deck_area"].update(Padding(deck_panel, (0, 1)))
         layout["used_area"].update(Padding(used_panel, (0, 1)))
