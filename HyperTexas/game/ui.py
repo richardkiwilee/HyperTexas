@@ -44,15 +44,18 @@ def format_poker_card(player_name: str, card: dict, index: int) -> str:
 def format_hand_card(player_name: str, card: dict, index: int) -> str:
     return f"\[{chr(96+index)}] {Card.format(player_name, card)}"
 
-def create_player_table(myname, players: list) -> Table:
+def create_player_table(myname, players: list, info: dict) -> Table:
     table = Table(box=box.HORIZONTALS, show_header=True, header_style="bold", show_edge=True, padding=(0,1))
     table.add_column("编号", justify="center", no_wrap=True)
+    table.add_column("", justify="center", no_wrap=True)
     table.add_column("名字")
     table.add_column("技能")
     table.add_column("分数", justify="right")
     table.add_column("底牌")
     table.add_column("手牌")
 
+    current_player_index = info.get('current_player_index', 0)
+    
     for i, player in enumerate(players):
         # 格式化底牌列表
         poker_cards = []
@@ -70,13 +73,17 @@ def create_player_table(myname, players: list) -> Table:
         hand_text = "\n".join(hand_cards) if hand_cards else ""
 
         # 格式化技能
-        skill_text = player['skill'] if player['skill'] else ""
-        print(hand_text)
+        skill = player.get('skill', '')
+
+        # 添加当前玩家指示器
+        current_player_indicator = "[yellow]►[/yellow]" if i == current_player_index else ""
+
         table.add_row(
             str(i + 1),
+            current_player_indicator,
             player['username'],
-            skill_text,
-            str(player['chip']),
+            skill or "",
+            str(player.get('chip', 0)),
             poker_text,
             hand_text
         )
@@ -150,7 +157,7 @@ def RefreshScreen(myname, info: dict):
         used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡")
         
         # 创建玩家表格
-        player_table = create_player_table(myname, info['players'])
+        player_table = create_player_table(myname, info['players'], info)
 
         # 创建游戏记录
         log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)

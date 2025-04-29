@@ -81,6 +81,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     lobby_init = self._broadcast()
                     return self._response(1, 200, json.dumps(lobby_init))
                 else:
+                    self._broadcast()
                     return self._response(1, 200, json.dumps('username already in use'))
             
             if body['action'] == LobbyAction.LOGOUT.value:
@@ -106,6 +107,7 @@ class LobbyServicer(rpc.LobbyServicer):
                 # 检查是否所有玩家都准备好
                 if sender == self.host:
                     if not all(user.get('ready', False) for user in self.users.values()):
+                        self._broadcast()
                         return self._response(1, 400, json.dumps('Not all players are ready'))
                     # 设置游戏状态为游戏中
                     self.gm.game_status = GameStatus.GAME.value
@@ -131,7 +133,10 @@ class LobbyServicer(rpc.LobbyServicer):
                             _.setVisible(player.username)
                             player.hand_cards.append(_)
                         pass
+                    self.gm.current_player_index = 0
+                    self.gm.game_status = GameStatus.GAME.value
                 else:
+                    self._broadcast()
                     return self._response(1, 400, json.dumps('Not host'))
                 self._broadcast()
                 return self._response(1, 200, json.dumps('Game Started'))
@@ -139,12 +144,11 @@ class LobbyServicer(rpc.LobbyServicer):
         # 游戏进行中状态
         elif self.gm.game_status == GameStatus.GAME.value:
             # 检查是否是当前玩家的回合
-            if sender != self.gm.player_order[self.gm.current_player_index]:
-                return self._response(1, 400, json.dumps('Not your turn'))
-            
+            if sender != self.gm.player_order[self.gm.current_player_index].username:
+                self._broadcast()
+                return self._response(1, 400, json.dumps(f'Not your turn, current player index: {self.gm.current_player_index}'))            
             # 根据公共牌数量判断游戏阶段
             public_cards_count = len(self.gm.public_cards)
-            
             if body['action'] == TurnAction.USE_CARD.value:
                 # 处理使用卡牌
                 card_id = body.get('arg1')
@@ -152,21 +156,18 @@ class LobbyServicer(rpc.LobbyServicer):
                     # TODO: 实现使用卡牌逻辑
                     self._next_player()
                     self._broadcast()
-            
-            elif body['action'] == TurnAction.USE_SKILL.value:
+            if body['action'] == TurnAction.USE_SKILL.value:
                 # 处理使用技能
                 skill_id = body.get('arg1')
                 if skill_id:
                     # TODO: 实现使用技能逻辑
                     self._next_player()
-                    self._broadcast()
-            
-            elif body['action'] == TurnAction.PASS.value:
+                    self._broadcast()            
+            if body['action'] == TurnAction.PASS.value:
                 # 处理过牌
                 self._next_player()
                 self._broadcast()
-            
-            elif body['action'] == TurnAction.FOLD.value:
+            if body['action'] == TurnAction.FOLD.value:
                 # 处理弃牌
                 if sender in self.gm.player_order:
                     self.gm.player_order.remove(sender)
@@ -175,17 +176,36 @@ class LobbyServicer(rpc.LobbyServicer):
                         self.gm.game_status = GameStatus.SCORE.value
                     self._next_player()
                     self._broadcast()
-            
-            # 检查是否需要发更多公共牌
+
+            # 检查是否需要发更多公共牌            
             if self._round_complete():
-                if public_cards_count < 5:
-                    # 发下一张公共牌
-                    # TODO: 实现发公共牌逻辑
+                if len(self.gm.public_cards) < 3:
+                    while len(self.gm.public_cards) < 3:
+                        _card = self.gm.deck.Draw()
+                        for player in self.gm.player_order:
+                            _card.setVisible(player.username)
+                        self.gm.public_cards.append(_card)
                     self._broadcast()
-                else:
-                    # 所有公共牌都发完且回合结束，进入计分阶段
+                    return self._response(1, 200, json.dumps('Game Started'))
+                if len(self.gm.public_cards) == 3:
+                    _card = self.gm.deck.Draw()
+                    for player in self.gm.player_order:
+                        _card.setVisible(player.username)
+                    self.gm.public_cards.append(_card)
+                    self._broadcast()
+                    return self._response(1, 200, json.dumps('Game Started'))
+                if len(self.gm.public_cards) == 4:
+                    _card = self.gm.deck.Draw()
+                    for player in self.gm.player_order:
+                        _card.setVisible(player.username)
+                    self.gm.public_cards.append(_card)
+                    self._broadcast()
+                    return self._response(1, 200, json.dumps('Game Started'))
+                if len(self.gm.public_cards) == 5:
+                    # 计分
                     self.gm.game_status = GameStatus.SCORE.value
                     self._broadcast()
+                    return self._response(1, 200, json.dumps('Game Started'))
         
         # 计分状态
         elif self.gm.game_status == GameStatus.SCORE.value:
@@ -203,7 +223,7 @@ class LobbyServicer(rpc.LobbyServicer):
             
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
-        
+        self._broadcast()
         return self._response(1, 200, json.dumps('Action processed'))
 
     def _next_player(self):
@@ -212,8 +232,7 @@ class LobbyServicer(rpc.LobbyServicer):
 
     def _round_complete(self):
         """检查当前回合是否结束"""
-        # TODO: 实现回合结束检查逻辑
-        return False
+        return self.gm.current_player_index + 1 == len(self.gm.player_order)
 
     def Subscribe(self, request, context):
         """
@@ -265,8 +284,8 @@ class LobbyServicer(rpc.LobbyServicer):
             data['ready_status'] = ready_status
         if data['game_status'] == GameStatus.GAME.value:
             data['current_player_index'] = self.gm.current_player_index
-            data['players'] = [p.to_dict() for p in self.gm.player_order] # 
-            data['public_cards'] = self.gm.public_cards
+            data['players'] = [p.to_dict() for p in self.gm.player_order]
+            data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
             data['last_used_cards'] = self.gm.last_used_cards
             data['deck'] = self.gm.deck.dump()
         print(data)
