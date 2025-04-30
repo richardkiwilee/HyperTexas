@@ -1,6 +1,5 @@
 from typing import List, Set, Dict, Any, Optional
 from HyperTexas.game.deck import Deck, ConsumeDeck
-from HyperTexas.game.character import *
 from HyperTexas.game.poker import *
 import random
 from HyperTexas.game.game_enum import *
@@ -125,7 +124,7 @@ class Manager:
         
         return result
 
-    def Score(self, character: Character) -> int:
+    def Score(self, character) -> int:
         """计算玩家得分"""
         # 保留原有的得分计算逻辑
         _score_info = {
@@ -161,13 +160,13 @@ class Manager:
         self._after_score(character, _score_info)
         return character.chip * character.mag
 
-    def _before_score(self, character: Character, _score_info: Dict[str, Any]) -> None:
+    def _before_score(self, character, _score_info: Dict[str, Any]) -> None:
         pass
 
-    def _after_score(self, character: Character, _score_info: Dict[str, Any]) -> None:
+    def _after_score(self, character, _score_info: Dict[str, Any]) -> None:
         pass
     
-    def _score_card(self, character: Character, poker: Poker, _score_info: Dict[str, Any]) -> None:
+    def _score_card(self, character, poker: Poker, _score_info: Dict[str, Any]) -> None:
         _chip = 0
         _mag = 0
         if poker.Material == Poker_Material_Universal:

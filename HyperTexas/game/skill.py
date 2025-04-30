@@ -1,4 +1,3 @@
-from HyperTexas.game.character import Character
 from HyperTexas.game.manager import Manager
 from HyperTexas.game.effects import *
 

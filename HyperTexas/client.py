@@ -15,7 +15,6 @@ from HyperTexas.game.manager import Manager
 from HyperTexas.game.poker import Poker
 from HyperTexas.game.card import Card
 from HyperTexas.game.effects import *
-from HyperTexas.game.character import Character
 from HyperTexas.game.ui import RefreshScreen
 
 

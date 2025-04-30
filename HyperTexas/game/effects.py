@@ -1,6 +1,5 @@
 import stat
 import random
-from HyperTexas.game.player import Character
 from HyperTexas.game.poker import *
 from HyperTexas.game.base_score import *
 from HyperTexas.game.manager import Manager
@@ -90,7 +89,7 @@ EFFECT_79 = "牌组内的每一张9生成一张技能卡"
 EFFECT_80 = "生成一张技能卡"
 
 
-def score(poker: Poker, player: Character):
+def score(poker: Poker, player):
     chip = 0
     mag = 0
     mult = 0
@@ -178,7 +177,7 @@ def score(poker: Poker, player: Character):
     return [chip, mag, mult]
 
 
-def score_end(mgr: Manager, poker: Poker, player: Character):
+def score_end(mgr: Manager, poker: Poker, player):
     chip = 0
     mag = 0
     mult = 0

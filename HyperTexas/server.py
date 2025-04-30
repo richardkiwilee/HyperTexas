@@ -6,6 +6,7 @@ import logging
 import json
 from urllib.parse import uses_fragment
 import grpc
+from HyperTexas.game import scorer
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
 from HyperTexas.game.manager import Manager
@@ -14,7 +15,7 @@ from HyperTexas.action import *
 import threading
 from HyperTexas.game.game_enum import *
 from HyperTexas.game.player import PlayerInfo
-
+from HyperTexas.game.scorer import PokerScorer
 
 queues = []
 # 配置日志记录器
@@ -63,6 +64,23 @@ class LobbyServicer(rpc.LobbyServicer):
             self.player_timers[player_name].cancel()
             del self.player_timers[player_name]
 
+    def isAllPlayerReady(self):
+        return all(user.get('ready', False) for user in self.users.values())
+
+    def resetPlayerReadyStatus(self):
+        for user in self.users.values():
+            user['ready'] = False
+
+    def getPlayerFromSender(self, sender):
+        for user in self.users.values():
+            if user['sender'] == sender:
+                return user
+        return None
+
+    def getPokerByArg(self, arg):
+        
+        return Poker()
+
     def Handle(self, request, context):
         sender = request.sender
         body = json.loads(request.body)
@@ -109,7 +127,7 @@ class LobbyServicer(rpc.LobbyServicer):
             if body['action'] == LobbyAction.START_GAME.value:
                 # 检查是否所有玩家都准备好
                 if sender == self.host:
-                    if not all(user.get('ready', False) for user in self.users.values()):
+                    if not self.isAllPlayerReady():
                         self._broadcast()
                         return self._response(1, 400, json.dumps('Not all players are ready'))
                     # 设置游戏状态为游戏中
@@ -207,29 +225,38 @@ class LobbyServicer(rpc.LobbyServicer):
                 if len(self.gm.public_cards) == 5:
                     # 进入等待出牌的阶段
                     self.gm.game_status = GameStatus.WAIT_PLAY.value
+                    self.resetPlayerReadyStatus()
                     self._broadcast()
                     return self._response(1, 200, json.dumps('Game Started'))
         elif self.gm.game_status == GameStatus.WAIT_PLAY.value:
             if body['action'] == TurnAction.PLAY_CARD.value:
                 # 处理玩家出牌
-                if self._round_complete():
-                    # TODO: 实现计分逻辑
+                player = self.getPlayerFromSender(sender)
+                _poker_play = []
+                _poker_play.append(self.getPokerByArg(body['arg1']))
+                _poker_play.append(self.getPokerByArg(body['arg2']))
+                _poker_play.append(self.getPokerByArg(body['arg3']))
+                _poker_play.append(self.getPokerByArg(body['arg4']))
+                _poker_play.append(self.getPokerByArg(body['arg5']))
+                _type, _score_pokers = PokerScorer.score(_poker_play)
+                self.users[sender]['ready'] = True
+                if self.isAllPlayerReady():
                     self.gm.game_status == GameStatus.SCORE.value
-                else:
-                    self._next_player()
+                    self.resetPlayerReadyStatus()
                 self._broadcast()
                 return self._response(1, 200, json.dumps('Turn Completed'))
         # 计分状态
         elif self.gm.game_status == GameStatus.SCORE.value:
             # TODO: 等待所有玩家确认
             # TODO: 重置游戏状态
-            self.gm.game_status = GameStatus.LOBBY.value
-            self.gm.public_cards = []
-            self.gm.current_player_index = 0
-            
-            # 重置玩家准备状态
-            for user in self.users.values():
-                user['ready'] = False            
+            self.users[sender]['ready'] = True
+            if self.isAllPlayerReady():
+                if self.gm.GameFinished():
+                    self.gm.game_status == GameStatus.LOBBY.value
+                    self.gm.public_cards = []
+                    self.gm.current_player_index = 0
+                else:
+                    self._next_player()
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
         self._broadcast()
