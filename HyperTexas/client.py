@@ -137,6 +137,8 @@ class Client:
             subscribeResp = next(subscribeResps)
             if subscribeResp is None:
                 print('Failed to subscribe game.')
+                self.running = False
+                os._exit(1)
                 return
             print('Successfully joined the game.')
             for resp in subscribeResps:
@@ -144,9 +146,14 @@ class Client:
                     break
                 self.table_info = json.loads(resp.body)
                 RefreshScreen(self.username, self.table_info)
+        except grpc.RpcError as rpc_error:
+            print('Stream interrupted: RPC Error -', rpc_error.code())
+            self.running = False
+            os._exit(1)
         except Exception as ex:
-            if self.running:  # 只在正常运行时打印错误
-                print('Error in message listener:', str(ex))
+            print('Stream interrupted:', str(ex))
+            self.running = False
+            os._exit(1)
 
     def sendMessage(self, action, arg1=None, arg2=None, arg3=None, arg4=None, arg5=None):
         msg = {
@@ -168,4 +175,3 @@ def main(address='localhost', port=50051, username=None):
             time.sleep(1)
     except KeyboardInterrupt:
         print('Bye')
-

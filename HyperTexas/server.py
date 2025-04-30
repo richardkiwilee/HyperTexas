@@ -40,29 +40,6 @@ class LobbyServicer(rpc.LobbyServicer):
         self.host = None
         self.users = dict()
         self.seq = 0
-        self.player_timers = {}  # 存储玩家操作的定时器
-        self.timeout_duration = 60  # 超时时间（秒）
-
-    def _handle_timeout(self, player_name):
-        """处理玩家操作超时"""
-        if player_name in self.player_timers:
-            del self.player_timers[player_name]
-            self._broadcast()
-            # 这里可以添加默认的超时处理逻辑，比如跳过该玩家的操作
-
-    def _start_player_timer(self, player_name):
-        """为玩家启动操作定时器"""
-        if player_name in self.player_timers:
-            self.player_timers[player_name].cancel()
-        timer = threading.Timer(self.timeout_duration, self._handle_timeout, args=[player_name])
-        timer.start()
-        self.player_timers[player_name] = timer
-
-    def _stop_player_timer(self, player_name):
-        """停止玩家的操作定时器"""
-        if player_name in self.player_timers:
-            self.player_timers[player_name].cancel()
-            del self.player_timers[player_name]
 
     def isAllPlayerReady(self):
         return all(user.get('ready', False) for user in self.users.values())
