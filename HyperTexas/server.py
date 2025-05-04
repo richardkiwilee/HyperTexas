@@ -7,6 +7,7 @@ import json
 from urllib.parse import uses_fragment
 import grpc
 from HyperTexas.game import scorer
+from HyperTexas.game.poker import Poker
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
 from HyperTexas.game.manager import Manager
@@ -39,6 +40,7 @@ class LobbyServicer(rpc.LobbyServicer):
         self.gm.game_status = GameStatus.LOBBY.value
         self.host = None
         self.users = dict()
+        self.score_dict = dict()
         self.seq = 0
 
     def isAllPlayerReady(self):
@@ -48,20 +50,20 @@ class LobbyServicer(rpc.LobbyServicer):
         for user in self.users.values():
             user['ready'] = False
 
-    def getPlayerFromSender(self, sender):
-        for user in self.users.values():
-            if user['sender'] == sender:
-                return user
+    def getPlayerFromSender(self, sender: str):
+        for player in self.gm.player_order:
+            if player.username == sender:
+                return player
         return None
 
     def getPokerByArg(self, arg):
-        
+        # TODO
         return Poker()
 
     def Handle(self, request, context):
         sender = request.sender
         body = json.loads(request.body)
-        logger.info('Receive from {}: {}'.format(sender, body))
+        logger.info('Current Status: {} Receive from {}: {}'.format(self.gm.game_status, sender, body))
         
         # 强制刷新功能
         if body['action'] == LobbyAction.SYNC.value:
@@ -210,30 +212,53 @@ class LobbyServicer(rpc.LobbyServicer):
                 # 处理玩家出牌
                 player = self.getPlayerFromSender(sender)
                 _poker_play = []
-                _poker_play.append(self.getPokerByArg(body['arg1']))
-                _poker_play.append(self.getPokerByArg(body['arg2']))
-                _poker_play.append(self.getPokerByArg(body['arg3']))
-                _poker_play.append(self.getPokerByArg(body['arg4']))
-                _poker_play.append(self.getPokerByArg(body['arg5']))
-                _type, _score_pokers = PokerScorer.score(_poker_play)
-                self.users[sender]['ready'] = True
-                if self.isAllPlayerReady():
-                    self.gm.game_status == GameStatus.SCORE.value
-                    self.resetPlayerReadyStatus()
+                try:
+                    _poker_play.append(self.getPokerByArg(body['arg1']))
+                    _poker_play.append(self.getPokerByArg(body['arg2']))
+                    _poker_play.append(self.getPokerByArg(body['arg3']))
+                    _poker_play.append(self.getPokerByArg(body['arg4']))
+                    _poker_play.append(self.getPokerByArg(body['arg5']))
+                    _type, _score_pokers = PokerScorer.score(_poker_play)
+                    self.users[sender]['ready'] = True
+                    self.score_dict[sender] = {
+                        'type': _type, 
+                        'score': PokerScorer.ScoreResult(_type, _score_pokers, player)
+                        }
+                    if self.isAllPlayerReady():
+                        # 计算分数
+                        max_score = max(self.score_dict[play].get('score', 0) for play in self.score_dict.keys())
+                        temp_chip = sum([max_score - self.score_dict[player.username]['score'] for player in self.gm.player_order])
+                        winner_number = [player.username for player in self.gm.player_order if self.score_dict[player.username]['score'] == max_score]
+                        for player in self.gm.player_order:
+                            if player.username in winner_number:
+                                _chg = int(temp_chip / len(winner_number))
+                                player.chip += _chg
+                                self.score_dict[player.username]['change'] = _chg
+                                self.score_dict[player.username]['win'] = True
+                            else:
+                                _chg = max_score - self.score_dict[player.username]['score']
+                                player.chip -= _chg
+                                self.score_dict[player.username]['change'] = _chg
+                                self.score_dict[player.username]['win'] = False
+                        self.gm.game_status == GameStatus.SCORE.value
+                except Exception as ex:
+                    print(ex)
+                self.resetPlayerReadyStatus()
                 self._broadcast()
                 return self._response(1, 200, json.dumps('Turn Completed'))
         # 计分状态
         elif self.gm.game_status == GameStatus.SCORE.value:
-            # TODO: 等待所有玩家确认
-            # TODO: 重置游戏状态
+            # 重置玩家确认状态
             self.users[sender]['ready'] = True
             if self.isAllPlayerReady():
                 if self.gm.GameFinished():
-                    self.gm.game_status == GameStatus.LOBBY.value
+                    self.score_dict = dict()
+                    self.gm.game_status = GameStatus.LOBBY.value
                     self.gm.public_cards = []
                     self.gm.current_player_index = 0
                 else:
-                    self._next_player()
+                    self.gm.game_status = GameStatus.GAME.value
+                    self.gm.current_player_index = self.gm.player_order.index(winner)
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
         self._broadcast()
@@ -301,6 +326,19 @@ class LobbyServicer(rpc.LobbyServicer):
             data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
             data['last_used_cards'] = self.gm.last_used_cards
             data['deck'] = self.gm.deck.dump()
+        if data['game_status'] == GameStatus.WAIT_PLAY.value:
+            data['current_player_index'] = self.gm.current_player_index
+            data['players'] = [p.to_dict() for p in self.gm.player_order]
+            data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
+            data['last_used_cards'] = self.gm.last_used_cards
+            data['deck'] = self.gm.deck.dump()
+        if data['game_status'] == GameStatus.SCORE.value:
+            data['current_player_index'] = self.gm.current_player_index
+            data['players'] = [p.to_dict() for p in self.gm.player_order]
+            data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
+            data['last_used_cards'] = self.gm.last_used_cards
+            data['deck'] = self.gm.deck.dump()
+            data['score_dict'] = self.score_dict
         _obj = pb2.Broadcast(
             sequence=self.seq,
             msgtype=0,

@@ -1,3 +1,4 @@
+from HyperTexas.game.player import PlayerInfo
 from HyperTexas.game.poker import *
 from HyperTexas.game.base_score import *
 from collections import defaultdict
@@ -80,3 +81,8 @@ class PokerScorer:
         else:
             sorted_cards = sorted(pokers, key=lambda x: Poker_Numbers.index(x.Number))
             return Score_Name_No_Pair, sorted_cards[:5]
+    
+    @staticmethod
+    def ScoreResult(score_type, score_list: list , player: PlayerInfo):
+        
+        return 0

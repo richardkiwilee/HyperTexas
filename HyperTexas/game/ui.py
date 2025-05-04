@@ -87,6 +87,69 @@ def create_player_table(myname, players: list, info: dict) -> Table:
     
     return table
 
+def create_player_table_score(myname, players: list, info: dict) -> Table:
+    table = Table(box=box.HORIZONTALS, show_header=True, header_style="bold", show_edge=True, padding=(0,1))
+    table.add_column("编号", justify="center", no_wrap=True)
+    table.add_column("", justify="center", no_wrap=True)
+    table.add_column("名字")
+    table.add_column("技能")
+    table.add_column("分数", justify="right")
+    table.add_column("底牌")
+    table.add_column("手牌")
+    table.add_column("计分类型", justify="center")
+
+    current_player_index = info.get('current_player_index', 0)
+    score_dict = info.get('score_dict', {})
+    
+    for i, player in enumerate(players):
+        # 格式化底牌列表
+        poker_cards = []
+        _index = 1
+        for card in player['pokers']:
+            poker_cards.append(format_poker_card(myname, card, _index))
+            _index += 1
+        poker_text = "\n".join(poker_cards) if poker_cards else ""
+        # 格式化手牌列表
+        hand_cards = []
+        for card in player['hand_cards']:
+            hand_cards.append(format_hand_card(myname, card, _index))
+            _index += 1
+        hand_text = "\n".join(hand_cards) if hand_cards else ""
+        # 格式化技能
+        skill = player.get('skill', '')
+        # 添加当前玩家指示器
+        current_player_indicator = "[yellow]►[/yellow]" if i == current_player_index else ""
+        
+        # 获取玩家的分数信息
+        player_score_info = score_dict.get(player['username'], {})
+        score = player.get('chip', 0)
+        score_type = player_score_info.get('type', '')
+        score_change = player_score_info.get('change', 0)
+        is_winner = player_score_info.get('win', False)
+        
+        # 构建分数显示字符串
+        score_display = str(score)
+        if score_change != 0:
+            change_color = "green" if score_change > 0 else "red"
+            change_sign = "+" if score_change > 0 else ""
+            score_display += f" [{change_color}]({change_sign}{score_change})[/{change_color}]"
+        
+        # 如果是赢家，在名字前加
+        player_name = f"" if is_winner else player['username']
+        
+        table.add_row(
+            str(i + 1),
+            current_player_indicator,
+            player_name,
+            skill or "",
+            score_display,
+            poker_text,
+            hand_text,
+            score_type
+        )
+    
+    return table
+
 def create_public_cards_area(info: dict) -> Group:
     # 创建公共牌槽
     card_slots = []
@@ -183,6 +246,36 @@ def RefreshScreen(myname, info: dict):
         layout["right_bottom"].update(log_panel)
 
         console.print(layout)
+    elif info['game_status'] in [GameStatus.SCORE.value, GameStatus.WAIT_PLAY.value]:
+        layout = Layout()
+        layout.split(
+            Layout(name="top", size=10),
+            Layout(name="bottom")
+        )
+        layout["bottom"].split_row(
+            Layout(name="left", ratio=2),
+            Layout(name="right", ratio=1)
+        )
+        layout["right"].split(
+            Layout(name="right_top", size=10),
+            Layout(name="right_bottom")
+        )
+        layout["right_top"].split_row(
+            Layout(name="deck_area"),
+            Layout(name="used_area")
+        )
+        public_cards_area = create_public_cards_area(info)
+        centered_public_cards = Padding(public_cards_area, (1, 30))
+        layout["top"].update(centered_public_cards)
+        player_table = create_player_table_score(myname, info['players'], info)
+        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部")
+        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡")
+        log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)
+        layout["left"].update(player_table)
+        layout["deck_area"].update(Padding(deck_panel, (0, 1)))
+        layout["used_area"].update(Padding(used_panel, (0, 1)))
+        layout["right_bottom"].update(log_panel)
+        console.print(layout)
     elif info['game_status'] == GameStatus.LOBBY.value:
         # 创建大厅表格
         table = Table(title="游戏大厅")
@@ -194,7 +287,7 @@ def RefreshScreen(myname, info: dict):
         
         # 添加玩家数据
         for idx, (player_name, ready_status) in enumerate(info.get('ready_status', {}).items(), start=1):
-            status_symbol = "✓" if ready_status else "✗"
+            status_symbol = "" if ready_status else ""
             table.add_row(str(idx), player_name, status_symbol)
         
         # 打印表格
@@ -206,8 +299,6 @@ def RefreshScreen(myname, info: dict):
         console.print("- cancel: 取消准备")
         console.print("- start: 开始游戏（仅房主可用）")
         console.print("- exit: 退出游戏")
-    elif info['game_status'] == GameStatus.SCORE.value:
-        pass
 
 if __name__ == '__main__':
     RefreshScreen('player1', test_dict)

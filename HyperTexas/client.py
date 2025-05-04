@@ -100,6 +100,8 @@ class Client:
                     self.running = False  # 设置运行状态为False
                     os._exit(0)  # 强制结束所有线程
                     break
+                if action == 'debug':
+                    print(self.table_info)
                 if action == 'sync':
                     self.sendMessage(LobbyAction.SYNC.value, self.username, arg2, arg3, arg4, arg5)
                 # 根据游戏状态处理不同的命令
@@ -119,7 +121,7 @@ class Client:
                 if self.table_info.get('game_status') == GameStatus.WAIT_PLAY.value:
                     self.sendMessage(TurnAction.PLAY_CARD.value, arg1, arg2, arg3, arg4, arg5)
                 if self.table_info.get('game_status') == GameStatus.SCORE.value:
-                    pass
+                    self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)
                     
             except KeyboardInterrupt:
                 print('\nReceived keyboard interrupt, exiting...')
