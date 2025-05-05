@@ -263,7 +263,26 @@ class LobbyServicer(rpc.LobbyServicer):
                     self.gm.current_player_index = 0
                 else:
                     self.gm.game_status = GameStatus.GAME.value
-                    
+                    while len(self.gm.public_cards) > 0:
+                        card = self.gm.public_cards.pop(0)
+                        self.gm.deck.cards.append(card)
+                    for player in self.gm.player_order:
+                        while len(player.pokers) > 0:
+                            card = player.pokers.pop(0)
+                            self.gm.deck.cards.append(card)
+                    self.gm.deck.shuffle()
+                    for card in self.gm.deck.cards:
+                        card.ResetVisible()
+                    # 发初始手牌
+                    for player in self.gm.player_order:
+                        for i in range(2):
+                            _ = self.gm.deck.Draw()
+                            _.setVisible(player.username)
+                            player.pokers.append(_)
+                        for i in range(3):
+                            _ = self.gm.consume.Draw()
+                            _.setVisible(player.username)
+                            player.hand_cards.append(_)
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
         self._broadcast()

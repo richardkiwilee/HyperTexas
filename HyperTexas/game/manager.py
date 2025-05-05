@@ -32,7 +32,7 @@ class Manager:
     def GameFinished(self) -> bool:
         """检查游戏是否结束"""
         for character in self.player_order:
-            if character.gold <= 0:
+            if character.chip <= 0:
                 return True
         return False
 
