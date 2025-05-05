@@ -1,13 +1,26 @@
-from HyperTexas.game.player import PlayerInfo
-from HyperTexas.game.poker import *
-from HyperTexas.game.base_score import *
+from pdb import main
 from collections import defaultdict
+
+try:
+    from HyperTexas.game.player import PlayerInfo
+    from HyperTexas.game.poker import *
+    from HyperTexas.game.base_score import *
+except:
+    from player import PlayerInfo
+    from poker import *
+    from base_score import *
 
 class PokerScorer:
     @staticmethod
     def score(pokers: list):     # list[Poker] -> (str, list[Poker])
+        for poker in pokers:
+            print(poker.to_dict())
         if not pokers:
-            return Score_Name_No_Pair, []
+            largest = pokers[0]
+            for poker in pokers:
+                if poker.number > largest.number:
+                    largest = poker
+            return Score_Name_No_Pair, [largest]
         
         # 统计数字和花色
         number_count = defaultdict(list)
@@ -21,13 +34,9 @@ class PokerScorer:
         
         # 检查是否同花
         is_flush = any(len(cards) >= 5 for cards in color_count.values())
-        flush_cards = []
         if is_flush:
-            for cards in color_count.values():
-                if len(cards) >= 5:
-                    flush_cards = sorted(cards, key=lambda x: Poker_Numbers.index(x.Number))[:5]
-                    break
-        
+            return Score_Name_Flush, pokers
+
         # 检查是否顺子
         def is_straight(cards):
             numbers = sorted(set(card.Number for card in cards), key=lambda x: Poker_Numbers.index(x))
@@ -86,3 +95,11 @@ class PokerScorer:
     def ScoreResult(score_type, score_list: list , player: PlayerInfo):
         
         return 0
+
+if __name__ == "__main__":
+    p = []
+    for i in range(0, 5):
+        c = Poker()
+        c.from_dict({'id': None, 'Number': None, 'Color': None, 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}})
+        p.append(c)
+    print(PokerScorer.score(p))

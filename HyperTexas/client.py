@@ -100,29 +100,40 @@ class Client:
                     self.running = False  # 设置运行状态为False
                     os._exit(0)  # 强制结束所有线程
                     break
-                if action == 'debug':
+                if action in ['debug', 'd']:
                     print(self.table_info)
-                if action == 'sync':
+                if action in ['sync', 's']:
                     self.sendMessage(LobbyAction.SYNC.value, self.username, arg2, arg3, arg4, arg5)
                 # 根据游戏状态处理不同的命令
                 if self.table_info.get('game_status') == GameStatus.LOBBY.value:
-                    if action == LobbyAction.READY.value:
-                        print(self.table_info)
-                        self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
-                    if action == LobbyAction.CANCEL.value:
-                        self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
-                    if action == LobbyAction.START_GAME.value:
-                        self.sendMessage(action, self.username, arg2, arg3, arg4, arg5)
+                    if action == LobbyAction.READY.value or action == LobbyAction.READY.value[0]:
+                        self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)
+                    if action == LobbyAction.CANCEL.value or action == LobbyAction.CANCEL.value[0]:
+                        self.sendMessage(LobbyAction.CANCEL.value, self.username, arg2, arg3, arg4, arg5)
+                    if action == LobbyAction.START_GAME.value or action == LobbyAction.START_GAME.value[0]:
+                        self.sendMessage(LobbyAction.START_GAME.value, self.username, arg2, arg3, arg4, arg5)
                 if self.table_info.get('game_status') == GameStatus.GAME.value:
                     if action in ['skill', 'card']:
                         self.sendMessage(action, arg1, arg2, arg3, arg4, arg5)
+                    elif action == 's':
+                        self.sendMessage('skill', arg1, arg2, arg3, arg4, arg5)
+                    elif action == 'c':
+                        self.sendMessage('card', arg1, arg2, arg3, arg4, arg5)
                     else:
                         print('In game, available commands: skill, card, exit')
                 if self.table_info.get('game_status') == GameStatus.WAIT_PLAY.value:
-                    self.sendMessage(TurnAction.PLAY_CARD.value, arg1, arg2, arg3, arg4, arg5)
+                    try:
+                        parts = command.strip().split()            
+                        arg1 = self.CheckArg(parts[0] if len(parts) > 0 else None)
+                        arg2 = self.CheckArg(parts[1] if len(parts) > 1 else None)
+                        arg3 = self.CheckArg(parts[2] if len(parts) > 2 else None)
+                        arg4 = self.CheckArg(parts[3] if len(parts) > 3 else None)
+                        arg5 = self.CheckArg(parts[4] if len(parts) > 4 else None)
+                        self.sendMessage(TurnAction.PLAY_CARD.value, arg1, arg2, arg3, arg4, arg5)
+                    except Exception as ex:
+                        print(ex)
                 if self.table_info.get('game_status') == GameStatus.SCORE.value:
-                    self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)
-                    
+                    self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)                    
             except KeyboardInterrupt:
                 print('\nReceived keyboard interrupt, exiting...')
                 self.sendMessage(LobbyAction.LOGOUT.value, self.username)
@@ -165,7 +176,35 @@ class Client:
         print('Server response: ', resp)
         return resp
 
-
+    def CheckArg(self, arg):
+        if arg is None:
+            return arg
+        _index = 1
+        for i in self.table_info['players']:
+            if i['username'] == self.username:
+                break
+            _index += 1
+        try:
+            # 如果是公共牌, 格式以pub.开头
+            if arg.startswith('pub.') or arg.startswith('p.'):
+                num = int(ord(arg[3].lower()) - ord('a') + 1)
+                return arg
+            # 如果是指定玩家的牌, 以p<num>.开头 根据p<num>找到玩家编号
+            if arg.startswith('p') and not arg.startswith('p.'):
+                index = int(arg[1])
+                if index != _index:
+                    raise Exception(f'Get poker error: {arg}, player index not match, expect {_index}, get {index}')
+                player = self.table_info['players'][index - 1]
+                _ = args.split('.')[1]
+                num = int(ord(_) - ord('a') + 1)
+                return arg
+            # 单字符缩写情况下指的是自己的牌
+            if len(arg) == 1:
+                num = int(ord(arg[0].lower()) - ord('a') + 1)
+                return self.table_info['players'][_index - 1][num - 1]
+            return f'p{_index}.{arg}'
+        except Exception as ex:
+            raise Exception(f'Get poker error: {arg}, error: {str(ex)}')
 
 def main(address='localhost', port=50051, username=None):
     chars = string.ascii_letters

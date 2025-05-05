@@ -287,7 +287,7 @@ def RefreshScreen(myname, info: dict):
         
         # 添加玩家数据
         for idx, (player_name, ready_status) in enumerate(info.get('ready_status', {}).items(), start=1):
-            status_symbol = "" if ready_status else ""
+            status_symbol = "√" if ready_status else ""
             table.add_row(str(idx), player_name, status_symbol)
         
         # 打印表格

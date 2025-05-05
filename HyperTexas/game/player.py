@@ -1,5 +1,9 @@
-from .poker import Poker
-from .base_score import *
+try:
+    from .poker import Poker
+    from .base_score import *
+except:
+    from poker import Poker
+    from base_score import *
 
 
 class PlayerInfo:

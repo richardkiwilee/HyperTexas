@@ -56,14 +56,10 @@ class LobbyServicer(rpc.LobbyServicer):
                 return player
         return None
 
-    def getPokerByArg(self, arg):
-        # TODO
-        return Poker()
-
     def Handle(self, request, context):
         sender = request.sender
         body = json.loads(request.body)
-        logger.info('Current Status: {} Receive from {}: {}'.format(self.gm.game_status, sender, body))
+        logger.info('{} Receive from {}: {}'.format(self.gm.game_status, sender, body))
         
         # 强制刷新功能
         if body['action'] == LobbyAction.SYNC.value:
@@ -123,7 +119,6 @@ class LobbyServicer(rpc.LobbyServicer):
                     random.shuffle(self.gm.player_order)                
                     # 发初始手牌
                     for player in self.gm.player_order:
-                        # TODO: 实现发牌逻辑
                         for i in range(2):
                             _ = self.gm.deck.Draw()
                             _.setVisible(player.username)
@@ -358,6 +353,17 @@ class LobbyServicer(rpc.LobbyServicer):
             del curUser['stream']
             self.gm.player_exit(curUser['name'])
         return callback
+
+    def getPokerByArg(self, arg):
+        if arg.startswith('pub.'):
+            _ = arg.split('.')[1]
+            num = int(ord(_) - ord('a'))
+            return self.gm.public_cards[num]
+        else:
+            index = int(arg[1])
+            _ = arg.split('.')[1]
+            num = int(ord(_) - ord('a'))
+            return self.gm.player_order[index - 1]['hand_cards'][num - 1]
 
 
 def server(port=50051):
