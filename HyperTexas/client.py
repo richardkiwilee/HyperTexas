@@ -102,6 +102,7 @@ class Client:
                     break
                 if action in ['debug', 'd']:
                     print(self.table_info)
+                    continue
                 if action in ['sync', 's']:
                     self.sendMessage(LobbyAction.SYNC.value, self.username, arg2, arg3, arg4, arg5)
                 # 根据游戏状态处理不同的命令

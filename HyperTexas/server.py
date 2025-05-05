@@ -208,11 +208,13 @@ class LobbyServicer(rpc.LobbyServicer):
                 player = self.getPlayerFromSender(sender)
                 _poker_play = []
                 try:
+                    # TODO: 'PlayerInfo' object is not subscriptable
                     _poker_play.append(self.getPokerByArg(body['arg1']))
                     _poker_play.append(self.getPokerByArg(body['arg2']))
                     _poker_play.append(self.getPokerByArg(body['arg3']))
                     _poker_play.append(self.getPokerByArg(body['arg4']))
                     _poker_play.append(self.getPokerByArg(body['arg5']))
+                    print(_poker_play)
                     _type, _score_pokers = PokerScorer.score(_poker_play)
                     self.users[sender]['ready'] = True
                     self.score_dict[sender] = {
@@ -230,6 +232,7 @@ class LobbyServicer(rpc.LobbyServicer):
                                 player.chip += _chg
                                 self.score_dict[player.username]['change'] = _chg
                                 self.score_dict[player.username]['win'] = True
+                                self.gm.current_player_index = self.gm.player_order.index(player)
                             else:
                                 _chg = max_score - self.score_dict[player.username]['score']
                                 player.chip -= _chg
@@ -253,7 +256,6 @@ class LobbyServicer(rpc.LobbyServicer):
                     self.gm.current_player_index = 0
                 else:
                     self.gm.game_status = GameStatus.GAME.value
-                    self.gm.current_player_index = self.gm.player_order.index(winner)
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
         self._broadcast()
