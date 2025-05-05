@@ -13,8 +13,6 @@ except:
 class PokerScorer:
     @staticmethod
     def score(pokers: list):     # list[Poker] -> (str, list[Poker])
-        for poker in pokers:
-            print(poker.to_dict())
         if not pokers:
             largest = pokers[0]
             for poker in pokers:
@@ -93,13 +91,14 @@ class PokerScorer:
     
     @staticmethod
     def ScoreResult(score_type, score_list: list , player: PlayerInfo):
-        
-        return 0
+        import random
+        return random.randint(0, 1000)
 
 if __name__ == "__main__":
     p = []
     for i in range(0, 5):
         c = Poker()
-        c.from_dict({'id': None, 'Number': None, 'Color': None, 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': [], 'color': []}})
+        c.from_dict({'id': 31, 'Number': 'Number_8', 'Color': 'Color_Club', 'Material': None, 'Wax': None, 'change': 0, 'visible': {'number': ['host'], 'color': ['host']}})
         p.append(c)
+        break
     print(PokerScorer.score(p))

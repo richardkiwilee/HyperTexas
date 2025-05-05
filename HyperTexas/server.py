@@ -44,7 +44,10 @@ class LobbyServicer(rpc.LobbyServicer):
         self.seq = 0
 
     def isAllPlayerReady(self):
-        return all(user.get('ready', False) for user in self.users.values())
+        for k in self.users.keys():
+            if not self.users[k]['ready']:
+                return False
+        return True
 
     def resetPlayerReadyStatus(self):
         for user in self.users.values():
@@ -205,6 +208,8 @@ class LobbyServicer(rpc.LobbyServicer):
         elif self.gm.game_status == GameStatus.WAIT_PLAY.value:
             if body['action'] == TurnAction.PLAY_CARD.value:
                 # 处理玩家出牌
+                if self.users[sender]['ready']:
+                    return self._response(1, 200, json.dumps('You already played'))
                 player = self.getPlayerFromSender(sender)
                 _poker_play = []
                 try:
@@ -214,15 +219,19 @@ class LobbyServicer(rpc.LobbyServicer):
                     _poker_play.append(self.getPokerByArg(body['arg3']))
                     _poker_play.append(self.getPokerByArg(body['arg4']))
                     _poker_play.append(self.getPokerByArg(body['arg5']))
-                    print(_poker_play)
+                    _poker_play = [i for i in _poker_play if i is not None]
                     _type, _score_pokers = PokerScorer.score(_poker_play)
                     self.users[sender]['ready'] = True
                     self.score_dict[sender] = {
                         'type': _type, 
                         'score': PokerScorer.ScoreResult(_type, _score_pokers, player)
                         }
+                    logger.info(f'Set Poker Play info: {self.score_dict[sender]}')
                     if self.isAllPlayerReady():
+                        logger.info(f'All player ready')
                         # 计算分数
+                        self.gm.game_status = GameStatus.SCORE.value
+                        self.resetPlayerReadyStatus()
                         max_score = max(self.score_dict[play].get('score', 0) for play in self.score_dict.keys())
                         temp_chip = sum([max_score - self.score_dict[player.username]['score'] for player in self.gm.player_order])
                         winner_number = [player.username for player in self.gm.player_order if self.score_dict[player.username]['score'] == max_score]
@@ -236,12 +245,10 @@ class LobbyServicer(rpc.LobbyServicer):
                             else:
                                 _chg = max_score - self.score_dict[player.username]['score']
                                 player.chip -= _chg
-                                self.score_dict[player.username]['change'] = _chg
-                                self.score_dict[player.username]['win'] = False
-                        self.gm.game_status == GameStatus.SCORE.value
+                                self.score_dict[player.username]['change'] = _chg * -1
+                                self.score_dict[player.username]['win'] = False                        
                 except Exception as ex:
-                    print(ex)
-                self.resetPlayerReadyStatus()
+                    logger.error(f'In Calculate Score: {ex}')
                 self._broadcast()
                 return self._response(1, 200, json.dumps('Turn Completed'))
         # 计分状态
@@ -256,6 +263,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     self.gm.current_player_index = 0
                 else:
                     self.gm.game_status = GameStatus.GAME.value
+                    
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
         self._broadcast()
@@ -361,16 +369,20 @@ class LobbyServicer(rpc.LobbyServicer):
         return callback
 
     def getPokerByArg(self, arg):
-        if arg.startswith('pub.'):
-            _ = arg.split('.')[1]
-            num = int(ord(_) - ord('a'))
-            return self.gm.public_cards[num]
-        else:
-            index = int(arg[1])
-            _ = arg.split('.')[1]
-            num = int(ord(_) - ord('a'))
-            return self.gm.player_order[index - 1]['hand_cards'][num - 1]
-
+        if arg is None:
+            return None
+        try:
+            if arg.startswith('pub.'):
+                _ = arg.split('.')[1]
+                num = int(ord(_) - ord('a'))
+                return self.gm.public_cards[num]
+            else:
+                index = int(arg[1])
+                _ = arg.split('.')[1]
+                num = int(ord(_) - ord('a'))
+                return self.gm.player_order[index - 1].pokers[num]
+        except Exception as ex:
+            logger.error(f'In getPokerByArg: {ex}')
 
 def server(port=50051):
     logger.info('Starting server')
