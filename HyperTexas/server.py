@@ -327,6 +327,10 @@ class LobbyServicer(rpc.LobbyServicer):
             data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
             data['last_used_cards'] = self.gm.last_used_cards
             data['deck'] = self.gm.deck.dump()
+            _ = dict()
+            for k, v in self.users.items():
+                _[k] = v['ready']
+            data['ready_status'] = _
         if data['game_status'] == GameStatus.SCORE.value:
             data['current_player_index'] = self.gm.current_player_index
             data['players'] = [p.to_dict() for p in self.gm.player_order]

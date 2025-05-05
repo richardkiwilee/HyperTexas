@@ -118,8 +118,11 @@ def create_player_table_score(myname, players: list, info: dict) -> Table:
         # 格式化技能
         skill = player.get('skill', '')
         # 添加当前玩家指示器
-        current_player_indicator = "[yellow]►[/yellow]" if i == current_player_index else ""
-        
+        if info['game_status'] == GameStatus.GAME.value:
+            current_player_indicator = "[yellow]►[/yellow]" if i == current_player_index else ""
+        if info['game_status'] == GameStatus.WAIT_PLAY.value:
+            current_player_indicator = "[green]√[/green]" if info['ready_status'][player['username']] else ""
+            pass
         # 获取玩家的分数信息
         player_score_info = score_dict.get(player['username'], {})
         score = player.get('chip', 0)

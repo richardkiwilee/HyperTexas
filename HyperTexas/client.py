@@ -187,7 +187,7 @@ class Client:
         try:
             # 如果是公共牌, 格式以pub.开头
             if arg.startswith('pub.') or arg.startswith('p.'):
-                num = int(ord(arg[3].lower()) - ord('a') + 1)
+                num = int(ord(arg[3].lower()) - ord('a'))
                 return arg
             # 如果是指定玩家的牌, 以p<num>.开头 根据p<num>找到玩家编号
             if arg.startswith('p') and not arg.startswith('p.'):
@@ -196,13 +196,12 @@ class Client:
                     raise Exception(f'Get poker error: {arg}, player index not match, expect {_index}, get {index}')
                 player = self.table_info['players'][index - 1]
                 _ = args.split('.')[1]
-                num = int(ord(_) - ord('a') + 1)
+                num = int(ord(_) - ord('a'))
                 return arg
             # 单字符缩写情况下指的是自己的牌
             if len(arg) == 1:
-                num = int(ord(arg[0].lower()) - ord('a') + 1)
-                return self.table_info['players'][_index - 1][num - 1]
-            return f'p{_index}.{arg}'
+                num = int(ord(arg[0].lower()) - ord('a'))
+                return f'p{_index}.{arg}'
         except Exception as ex:
             raise Exception(f'Get poker error: {arg}, error: {str(ex)}')
 
