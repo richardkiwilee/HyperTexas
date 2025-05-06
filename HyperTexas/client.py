@@ -106,6 +106,8 @@ class Client:
                 if action in ['sync', 's']:
                     self.sendMessage(LobbyAction.SYNC.value, self.username, arg2, arg3, arg4, arg5)
                 # 根据游戏状态处理不同的命令
+                if self.table_info.get('game_status') == GameStatus.SCORE.value:
+                    self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)                    
                 if self.table_info.get('game_status') == GameStatus.LOBBY.value:
                     if action == LobbyAction.READY.value or action == LobbyAction.READY.value[0]:
                         self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)
@@ -133,8 +135,6 @@ class Client:
                         self.sendMessage(TurnAction.PLAY_CARD.value, arg1, arg2, arg3, arg4, arg5)
                     except Exception as ex:
                         print(ex)
-                if self.table_info.get('game_status') == GameStatus.SCORE.value:
-                    self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)                    
             except KeyboardInterrupt:
                 print('\nReceived keyboard interrupt, exiting...')
                 self.sendMessage(LobbyAction.LOGOUT.value, self.username)

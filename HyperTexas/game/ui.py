@@ -128,7 +128,10 @@ def create_player_table_score(myname, players: list, info: dict) -> Table:
         if info['game_status'] == GameStatus.WAIT_PLAY.value:
             current_player_indicator = "[green]√[/green]" if info['ready_status'][player['username']] else "[yellow]WAITING[/yellow]"
         if info['game_status'] == GameStatus.SCORE.value:
-            current_player_indicator = "[yellow]👑[/yellow]" if info['score_dict'][player['username']]['win'] else ""
+            if info['ready_status'][player['username']]:
+                current_player_indicator = "[green]READY[/green]"
+            else:
+                current_player_indicator = "[yellow]👑[/yellow]" if info['score_dict'][player['username']]['win'] else ""
 
         # 获取玩家的分数信息
         player_score_info = score_dict.get(player['username'], {})

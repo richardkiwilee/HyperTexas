@@ -39,6 +39,9 @@ class Deck:
 class ConsumeDeck:
     def __init__(self):
         self.cards = []
+        self.init()
+        
+    def init(self):
         for i in range(0, 150):
             try:
                 for j in range(0, 4):
@@ -50,15 +53,15 @@ class ConsumeDeck:
                     self.cards.append(_)
             except Exception as e:
                 pass
-        
+        self.shuffle()
+
     def shuffle(self):
         random.shuffle(self.cards)
 
     def Draw(self):
+        if len(self.cards) == 0:        
+            self.init()
         return self.cards.pop(0)
 
     def Add(self, card: Card):
         self.cards.append(card)
-
-    def Pop(self):
-        return self.cards.pop()
