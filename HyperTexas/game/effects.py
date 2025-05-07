@@ -177,25 +177,23 @@ def score(poker: Poker, player):
     return [chip, mag, mult]
 
 
-def score_end(mgr: Manager, poker: Poker, player):
+def score_end(mgr: Manager, poker: Poker, player, play_type):
     chip = 0
     mag = 0
     mult = 0
-    play_type = player.played_type
     """
     Score_Name_No_Pair = '高牌'
-Score_Name_One_Pair = '对子'
-Score_Name_Two_Pair = '两对'
-Score_Name_Three = '三条'
-Score_Name_Straight = '顺子'
-Score_Name_Flush = '同花'
-Score_Name_Full_House = '葫芦'
-Score_Name_Four = '四条'
-Score_Name_Straight_Flush = '同花顺'
-Score_Name_Five = '五条'
-Score_Name_House_Flush = '同花葫芦'
-Score_Name_Five_Flush = '同花五条'
-
+    Score_Name_One_Pair = '对子'
+    Score_Name_Two_Pair = '两对'
+    Score_Name_Three = '三条'
+    Score_Name_Straight = '顺子'
+    Score_Name_Flush = '同花'
+    Score_Name_Full_House = '葫芦'
+    Score_Name_Four = '四条'
+    Score_Name_Straight_Flush = '同花顺'
+    Score_Name_Five = '五条'
+    Score_Name_House_Flush = '同花葫芦'
+    Score_Name_Five_Flush = '同花五条'
     """
     if EFFECT_52 in player.effects and player_type == Score_Name_Flush:
         mult -= 9999
@@ -387,3 +385,21 @@ Score_Name_Five_Flush = '同花五条'
     if EFFECT_80:
         pass
     return [chip, mag, mult]
+
+
+class EffectHelper:
+    @staticmethod
+    def CalculateStart(_type, chip, mag, mult, player, gm):
+        return chip, mag, mult
+
+    @staticmethod
+    def CalculateScoredPoker(_type, chip, mag, mult, player, gm, poker):
+        return chip, mag, mult
+
+    @staticmethod
+    def CalculateUnScoredPoker(_type, chip, mag, mult, player, gm, poker):
+        return chip, mag, mult
+
+    @staticmethod
+    def CalculateEnd(_type, chip, mag, mult, player, gm):
+        return chip, mag, mult

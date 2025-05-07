@@ -6,7 +6,7 @@ import logging
 import json
 from urllib.parse import uses_fragment
 import grpc
-from HyperTexas.game import scorer
+from HyperTexas.game.effects import EffectHelper
 from HyperTexas.game.poker import Poker
 import HyperTexas.protocol.service_pb2 as pb2
 import HyperTexas.protocol.service_pb2_grpc as rpc
@@ -17,6 +17,8 @@ import threading
 from HyperTexas.game.game_enum import *
 from HyperTexas.game.player import PlayerInfo
 from HyperTexas.game.scorer import PokerScorer
+from HyperTexas.game.base_score import BASE_SCORE, LEVEL_BOUNS_SCORE
+
 
 queues = []
 # 配置日志记录器
@@ -227,10 +229,28 @@ class LobbyServicer(rpc.LobbyServicer):
                     _poker_play.append(self.getPokerByArg(body['arg5']))
                     _poker_play = [i for i in _poker_play if i is not None]
                     _type, _score_pokers = PokerScorer.score(_poker_play)
+                    _unscore_pokers = set(self.gm.public_cards + player.pokers) - set(_score_pokers)
+                    print(set(_score_pokers))
+                    print(set(_unscore_pokers))
+                    mult = 1
+                    chip, mag = BASE_SCORE[_type]
+                    _chip1, _mag1 = LEVEL_BOUNS_SCORE[_type]
+                    level = player.level[_type]
+                    chip += _chip1 * level
+                    mag += _mag1 * level
+                    chip, mag, mult = EffectHelper.CalculateStart(_type, chip, mag, mult, player, self.gm)
+                    for poker in _score_pokers:
+                        chip, mag, mult = EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, self.gm, poker)
+                    for poker in _unscore_pokers:
+                        chip, mag, mult = EffectHelper.CalculateUnScoredPoker(_type, chip, mag, mult, player, self.gm, poker)
+                    chip, mag, mult = EffectHelper.CalculateEnd(_type, chip, mag, mult, player, self.gm)
                     self.users[sender]['ready'] = True
                     self.score_dict[sender] = {
                         'type': _type, 
-                        'score': PokerScorer.ScoreResult(_type, _score_pokers, player)
+                        'score': chip * mag * mult,
+                        'chip': chip,
+                        'mag': mag,
+                        'mult': mult
                         }
                     if self.isAllPlayerReady():
                         # 计算分数
