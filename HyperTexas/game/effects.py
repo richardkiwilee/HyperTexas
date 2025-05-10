@@ -3,6 +3,7 @@ import random
 from HyperTexas.game.poker import *
 from HyperTexas.game.base_score import *
 from HyperTexas.game.manager import Manager
+from HyperTexas.game.scorer import trans_number_to_int
 EFFECT_DICT = dict()
 
 CONDITIN_GOLD_BASE = 10000
@@ -76,7 +77,7 @@ EFFECT_66 = "未计分的每张K给与x1.5倍率"
 EFFECT_67 = "如果没有手牌, +15倍率"
 EFFECT_68 = "牌组中的每一张黄金牌给与1w资金"
 EFFECT_69 = "计分时, 每一个效果+3倍率"
-EFFECT_70 = "销毁每一张计分的6, 生成相应数量的技能卡"
+EFFECT_70 = "生成一张技能卡"
 EFFECT_71 = "每拥有1w资金, +20筹码"
 EFFECT_72 = "1/6的概率, x4倍率"
 EFFECT_73 = "会是什么效果呢?[印错小丑]"
@@ -86,314 +87,154 @@ EFFECT_76 = "如果出牌包含A和顺子, 生成一张技能卡"
 EFFECT_77 = "如果牌型为同花顺, 生成一张技能卡"
 EFFECT_78 = "计分时, 若资金少于5w, 生成一张技能卡"
 EFFECT_79 = "牌组内的每一张9生成一张技能卡"
-EFFECT_80 = "生成一张技能卡"
+EFFECT_80 = ""
 
-
-def score(poker: Poker, player):
-    chip = 0
-    mag = 0
-    mult = 0
-    color = poker.color
-    number = poker.Number
-    if EFFECT_19 in player.effects and number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:  # 人头无效
-        return [chip, mag, mult]
-    if color == Poker_Color_Heart:      # 红桃
-        if EFFECT_8 in player.effects:
-            return [chip, mag, mult]
-        if EFFECT_2 in player.effects:
-            mag += 3
-        if EFFECT_5 in player.effects:
-            if random.randint(1, 2) == 1:
-                mag += 1.5
-    if color == Poker_Color_Club:       # 黑桃
-        if EFFECT_9 in player.effects:
-            return [chip, mag, mult]
-        if EFFECT_1 in player.effects:
-            mag += 3
-        if EFFECT_4 in player.effects:
-            muilt += 1.5
-        if EFFECT_6 in player.effects:
-            chip += 50
-    if color == Poker_Color_Plum:       # 梅花
-        if EFFECT_10 in player.effects:
-            return [chip, mag, mult]
-        if EFFECT_3 in player.effects:
-            mag += 3
-        if EFFECT_7 in player.effects:
-            mag += 7
-    if color == Poker_Color_Diamond:    # 方块
-        if EFFECT_11 in player.effects:
-            return [chip, mag, mult]
-    if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:  # 人头牌
-        if EFFECT_12 in player.effects:
-            chip += 30
-    if EFFECT_13 in player.effects:
-        if number in [Poker_Number_A, Poker_Number_3, Poker_Number_5, Poker_Number_7, Poker_Number_9]:
-            chip += 30
-    if EFFECT_14 in player.effects:
-        if number in [Poker_Number_A, Poker_Number_2, Poker_Number_3, Poker_Number_5, Poker_Number_8]:
-            mag += 8
-    if EFFECT_15 in player.effects:
-        if number in [Poker_Number_2, Poker_Number_4, Poker_Number_6, Poker_Number_8, Poker_Number_10]:
-            mag += 4
-    if EFFECT_16 in player.effects:
-        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
-            if EFFECT_16 not in player.custom_tag:
-                mult += 2
-                player.custom_tag.append(EFFECT_16)
-    if EFFECT_17 in player.effects:
-        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
-            mag += 5
-    if EFFECT_18 in player.effects:
-        if number in [Poker_Number_Q, Poker_Number_K]:
-            mult += 2
-    if EFFECT_20 in player.effects and number == Poker_Number_A:
-        chip += 20
-        mag += 4
-    if EFFECT_21 in player.effects:
-        if number in [Poker_Number_10, Poker_Number_4]:
-            chip += 20
-            mag += 4
-    if EFFECT_22 in player.effects:
-        pass
-    if EFFECT_23 in player.effects:
-        pass
-    if EFFECT_24 in player.effects:
-        pass
-    if EFFECT_25 in player.effects:
-        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
-            pass
-    if EFFECT_26 in player.effects:
-        pass
-    if EFFECT_27 in player.effects:
-        if number == Poker_Number_8:
-            if random.randint(1, 4) == 1:
-                pass
-    if EFFECT_28 in player.effects:
-        poker.Material = Poker_Material_Gold
-    if EFFECT_44 in player.effects:
-        if number == Poker_Number_Q:
-            mag += 13
-    return [chip, mag, mult]
-
-
-def score_end(mgr: Manager, poker: Poker, player, play_type):
-    chip = 0
-    mag = 0
-    mult = 0
-    """
-    Score_Name_No_Pair = '高牌'
-    Score_Name_One_Pair = '对子'
-    Score_Name_Two_Pair = '两对'
-    Score_Name_Three = '三条'
-    Score_Name_Straight = '顺子'
-    Score_Name_Flush = '同花'
-    Score_Name_Full_House = '葫芦'
-    Score_Name_Four = '四条'
-    Score_Name_Straight_Flush = '同花顺'
-    Score_Name_Five = '五条'
-    Score_Name_House_Flush = '同花葫芦'
-    Score_Name_Five_Flush = '同花五条'
-    """
-    if EFFECT_52 in player.effects and player_type == Score_Name_Flush:
-        mult -= 9999
-    if EFFECT_29 in player.effects:
-        mag += 4
-    if EFFECT_30 in player.effects:
-        chip += 100
-    if EFFECT_31 in player.effects:
-        if random.randint(1, 5) == 1:
-            mag += 20
-    if EFFECT_32 in player.effects:
-        chip += 250
-    if EFFECT_33 in player.effects:
-        if random.randint(1, 6) == 1:
-            mag += 15
-    if EFFECT_34 in player.effects:
-        if poker.Type == Poker_Type_Double:
-            chip += 50
-    if EFEFECT_34 in player.effects and play_type == Score_Name_One_Pair:
-        chip += 50
-    if EFFECT_35 in player.effects and play_type == Score_Name_Three:
-        chip += 100
-    if EFFECT_36 in player.effects and play_type == Score_Name_Two_Pair:
-        chip += 80
-    if EFFECT_37 in player.effects and play_type == Score_Name_Straight:
-        chip += 100
-    if EFFECT_38 in player.effects and play_type == Score_Name_Flush:
-        chip += 80
-    if EFFECT_39 in player.effects and play_type == Score_Name_One_Pair:
-        mag += 8
-    if EFFECT_40 in player.effects and play_type == Score_Name_Three:
-        mag += 12
-    if EFFECT_41 in player.effects and play_type == Score_Name_Two_Pair:
-        mag += 10
-    if EFFECT_42 in player.effects and play_type == Score_Name_Flush:
-        mag += 10
-    if EFFECT_43 in player.effects and len(player.poker_play) <= 3:
-        mag += 20
-    if EFFECT_45 in player.effects:
-        cnt = 0
-        for card in player.poker_scored:
-            if card.Number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
-                cnt += 1
-        if cnt >= 3:
-            mag += 10
-    if EFFECT_46 in player.effects:
-        cnt = [0, 0, 0, 0]
-        for card in player.poker_scored:
-            if card.color == Poker_Color_Heart:
-                cnt[0] = 1
-            if card.color == Poker_Color_Club:
-                cnt[1] = 1
-            if card.color == Poker_Color_Diamond:
-                cnt[2] = 1
-            if card.color == Poker_Color_Plum:
-                cnt[3] = 1
-        if sum(cnt) == 4:
-            mult += 3
-    if EFFECT_47 in player.effects and play_type == Score_Name_Two_Pair:
-        mult += 2
-    if EFFECT_48 in player.effects and play_type == Score_Name_Three:
-        mult += 3
-    if EFFECT_49 in player.effects and play_type == Score_Name_Four:
-        mult += 4
-    if EFFECT_50 in player.effects and play_type == Score_Name_Straight:
-        mult += 3
-    if EFFECT_51 in player.effects and play_type == Score_Name_Flush:
-        mult += 2
-    if EFFECT_53 in player.effects:
-        if random.randint(1, 4) == 1:
-            player.level[play_type] += 1
-    if EFFECT_54 in player.effects:
-        mag += sum(player.level.values()) * 0.1
-    if EFFECT_55 in player.effects:
-        for k, v in player.level:
-            player.level[k] += 1
-    if EFFECT_56 in player.effects:
-        player.level[play_type] += 1
-    if EFFECT_57 in player.effects:
-        chip += 2 * len(mgr.deck.cards)
-    if EFFECT_58 in player.effects:
-        cnt = 0
-        for card in mgr.deck.cards:
-            if card.Material == Poker_Material_Stone:
-                cnt += 1
-        chip += 25 * cnt
-    if EFFECT_59 in player.effects:
-        cnt = 0
-        for card in mgr.deck.cards:
-            if card.Material == Poker_Material_Iron:
-                cnt += 1
-        mag += 0.2 * cnt
-    if EFFECT_60 in player.effects:
-        cnt = 0
-        for card in mgr.deck.cards:
-            if card.Material in [Poker_Material_Universal, Poker_Material_Gold, Poker_Material_Glass, Poker_Material_Iron, Poker_Material_Stone, Poker_Material_Lucky, Poker_Material_Chip, Poker_Material_Magnification]:
-                cnt += 1
-        mult += 0.1 * cnt
-    if EFFECT_61 in player.effects:
-        if len(mgr.get_all_pokers()) > 52:
-            mult += 0.25 * (len(mgr.get_all_pokers()) - 52)
-    if EFFECT_62 in player.effects:
-        if len(mgr.get_all_pokers()) < 52:
-            mag += 4 * (52 - len(mgr.get_all_pokers()))
-    if EFFECT_63 in player.effects:
-        cnt = 0
-        for card in mgr.get_all_pokers():
-            if card.Material == Poker_Material_Glass:
-                cnt += 1
-        mult += cnt * 0.75
-    if EFFECT_64 in player.effects:
-        cnt = 0
-        for card in mgr.get_all_pokers():
-            if card.Material is not None:
-                cnt += 1
-        if cnt > 16:
-            mult += 3
-    if EFFECT_65 in player.effects:
-        cnt = 0
-        for card in mgr.get_all_pokers():
-            if card.Number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
-                cnt += 1
-        if cnt < 12:
-            mult += cnt * 1
-    if EFFECT_66 in player.effects:
-        cnt = 0
-        for card in player.poker_unscored:
-            if card.number == Poker_Number_K:
-                cnt += 1
-        mult += cnt * 1.5
-    if EFFECT_67 in player.effects:
-        if len(player.poker_unscored) == 0:
-            mg += 15
-    if EFFECT_68 in player.effects:
-        cnt = 0
-        for card in mgr.get_all_pokers():
-            if card.Material == Poker_Material_Gold:
-                cnt += 1
-        player.gold += cnt * CONDITIN_GOLD_BASE
-    if EFFECT_69 in player.effects:
-        mag += 3 * len(player.effects)
-    if EFFECT_70 in player.effects:
-        cnt = 0
-        for card in mgr.get_all_pokers():
-            if card.Number == Poker_Number_6:
-                cnt += 1
-        if cnt < 4:
-            for i in range(0, cnt):
-                pass
-    if EFFECT_71 in player.effects:
-        cnt = player.gold // CONDITIN_GOLD_BASE
-        chip += cnt * 20
-    if EFFECT_72 in player.effects:
-        if random.randint(1, 6) == 1:
-            mult += 4
-    if EFFECT_73 in player.effects:
-        pass
-    if EFFECT_74 in player.effects:
-        cnt = player.gold // CONDITIN_GOLD_BASE
-        mag += 2 * cnt
-    if EFFECT_75 in player.effects:
-        if len(player.poker_play) == 1:
-            card = player.poker_play[0]
-            tmp = Poker()
-            tmp.Color = card.Color
-            tmp.Number = card.Number
-            tmp.Material = card.Material
-            tmp.Wax = card.Wax
-            mgr.deck.Add(tmp)
-    if EFFECT_76 in player.effects:
-        if play_type == Score_Name_Straight:
-            for card in player.poker_scored:
-                if card.number == Poker_Number_A:
-                    pass
-                    break
-    if EFFECT_77 in player.effects:
-        if play_type == Score_Name_Straight_Flush:
-            pass
-    if EFFECT_78 in player.effects:
-        if player.gold < 5 * CONDITIN_GOLD_BASE:
-            pass
-    if EFFECT_79 in player.effects:
-        cnt = 0
-        for card in mgr.get_all_pokers():
-            if card.number == Poker_Number_9:
-                cnt += 1
-        for i in range(0, cnt):
-            pass
-    if EFFECT_80:
-        pass
-    return [chip, mag, mult]
 
 
 class EffectHelper:
+    @staticmethod
+    def getPokerChipMag(poker, player):
+        _chip = 0
+        _mag = 0
+        _mult = 1
+        number = poker.Number
+        material = poker.Material
+        if number == Poker_Number_2:
+            _chip = 2
+        if number == Poker_Number_3:
+            _chip = 3
+        if number == Poker_Number_4:
+            _chip = 4
+        if number == Poker_Number_5:
+            _chip = 5
+        if number == Poker_Number_6:
+            _chip = 6
+        if number == Poker_Number_7:
+            _chip = 7
+        if number == Poker_Number_8:
+            _chip = 8
+        if number == Poker_Number_9:
+            _chip = 9
+        if number == Poker_Number_10:
+            _chip = 10
+        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+            _chip = 10
+        if number == Poker_Number_A:
+            _chip = 11
+        if material == Poker_Material_Stone:    # 石头
+            _chip = 50
+        if material == Poker_Material_Chip:     # 筹码
+            _chip += 30
+        if material == Poker_Material_Glass:    # 玻璃
+            _mult = 2
+        if material == Poker_Material_Lucky:    # 幸运
+            if random.randint(1, 5) == 1:
+                _mag += 20
+            if random.randint(1, 20) == 1:
+                player.chip += 2 * CONDITIN_GOLD_BASE
+        if material == Poker_Material_Magnification:    # 倍率
+            _mag += 4
+        return _chip, _mag, _mult
+
     @staticmethod
     def CalculateStart(_type, chip, mag, mult, player, gm):
         return chip, mag, mult
 
     @staticmethod
-    def CalculateScoredPoker(_type, chip, mag, mult, player, gm, poker):
+    def CalculateScoredPoker(i, _type, chip, mag, mult, player, gm, poker, repeated=False):
+        color = poker.Color
+        number = poker.Number
+        _c, _m1, _m2 = EffectHelper.getPokerChipMag(poker, player)
+        chip += _c
+        mag += _m1
+        mag += _m2
+        if EFFECT_19 in player.effects and number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:  # 人头无效
+            return 0, 0, 0
+        if color == Poker_Color_Heart:      # 红桃
+            if EFFECT_8 in player.effects:
+                return 0, 0, 0
+            if EFFECT_2 in player.effects:
+                mag += 3
+            if EFFECT_5 in player.effects:
+                if random.randint(1, 2) == 1:
+                    mag += 1.5
+        if color == Poker_Color_Club:       # 黑桃
+            if EFFECT_9 in player.effects:
+                return 0, 0, 0
+            if EFFECT_1 in player.effects:
+                mag += 3
+            if EFFECT_4 in player.effects:
+                muilt += 1.5
+            if EFFECT_6 in player.effects:
+                chip += 50
+        if color == Poker_Color_Plum:       # 梅花
+            if EFFECT_10 in player.effects:
+                return 0, 0, 0
+            if EFFECT_3 in player.effects:
+                mag += 3
+            if EFFECT_7 in player.effects:
+                mag += 7
+        if color == Poker_Color_Diamond:    # 方块
+            if EFFECT_11 in player.effects:
+                return 0, 0, 0
+        if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:  # 人头牌
+            if EFFECT_12 in player.effects:
+                chip += 30
+        if EFFECT_13 in player.effects:
+            if number in [Poker_Number_A, Poker_Number_3, Poker_Number_5, Poker_Number_7, Poker_Number_9]:
+                chip += 30
+        if EFFECT_14 in player.effects:
+            if number in [Poker_Number_A, Poker_Number_2, Poker_Number_3, Poker_Number_5, Poker_Number_8]:
+                mag += 8
+        if EFFECT_15 in player.effects:
+            if number in [Poker_Number_2, Poker_Number_4, Poker_Number_6, Poker_Number_8, Poker_Number_10]:
+                mag += 4
+        if EFFECT_16 in player.effects:
+            if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+                if EFFECT_16 not in player.custom_tag:
+                    mult += 2
+                    player.custom_tag.append(EFFECT_16)
+        if EFFECT_17 in player.effects:
+            if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+                mag += 5
+        if EFFECT_18 in player.effects:
+            if number in [Poker_Number_Q, Poker_Number_K]:
+                mult += 2
+        if EFFECT_20 in player.effects and number == Poker_Number_A:
+            chip += 20
+            mag += 4
+        if EFFECT_21 in player.effects:
+            if number in [Poker_Number_10, Poker_Number_4]:
+                chip += 20
+                mag += 4
+        if EFFECT_22 in player.effects:
+            if not repeated:
+                return EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, gm, poker, repeated=True)
+        if EFFECT_23 in player.effects:
+            if not repeated:
+                if trans_number_to_int(poker) in [2,3,4,5]:
+                    return EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, gm, poker, repeated=True)
+        if EFFECT_24 in player.effects:
+            if not repeated:
+                return EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, gm, poker, repeated=True)
+        if EFFECT_25 in player.effects:
+            if number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+                if not repeated:
+                    return EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, gm, poker, repeated=True)
+        if EFFECT_26 in player.effects:
+            if not repeated and i == 0:
+                return EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, gm, poker, repeated=True)
+        if EFFECT_27 in player.effects:
+            if number == Poker_Number_8:
+                if random.randint(1, 4) == 1:
+                    _consume = gm.consume.Draw()
+                    _consume.setVisible(player.username)
+                    player.hand_cards.append(_consume)
+        if EFFECT_28 in player.effects:
+            poker.Material = Poker_Material_Gold
+        if EFFECT_44 in player.effects:
+            if number == Poker_Number_Q:
+                mag += 13
         return chip, mag, mult
 
     @staticmethod
@@ -402,4 +243,199 @@ class EffectHelper:
 
     @staticmethod
     def CalculateEnd(_type, chip, mag, mult, player, gm):
+        if EFFECT_52 in player.effects and player_type == Score_Name_Flush:
+            mag = 0
+        if EFFECT_29 in player.effects:
+            mag += 4
+        if EFFECT_30 in player.effects:
+            chip += 100
+        if EFFECT_31 in player.effects:
+            if random.randint(1, 5) == 1:
+                mag += 20
+        if EFFECT_32 in player.effects:
+            chip += 250
+        if EFFECT_33 in player.effects:
+            if random.randint(1, 6) == 1:
+                mag += 15
+        if EFFECT_34 in player.effects:
+            if poker.Type == Poker_Type_Double:
+                chip += 50
+        if EFFECT_34 in player.effects and play_type == Score_Name_One_Pair:
+            chip += 50
+        if EFFECT_35 in player.effects and play_type == Score_Name_Three:
+            chip += 100
+        if EFFECT_36 in player.effects and play_type == Score_Name_Two_Pair:
+            chip += 80
+        if EFFECT_37 in player.effects and play_type == Score_Name_Straight:
+            chip += 100
+        if EFFECT_38 in player.effects and play_type == Score_Name_Flush:
+            chip += 80
+        if EFFECT_39 in player.effects and play_type == Score_Name_One_Pair:
+            mag += 8
+        if EFFECT_40 in player.effects and play_type == Score_Name_Three:
+            mag += 12
+        if EFFECT_41 in player.effects and play_type == Score_Name_Two_Pair:
+            mag += 10
+        if EFFECT_42 in player.effects and play_type == Score_Name_Flush:
+            mag += 10
+        if EFFECT_43 in player.effects and len(player.poker_play) <= 3:
+            mag += 20
+        if EFFECT_45 in player.effects:
+            cnt = 0
+            for card in player.poker_scored:
+                if card.Number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+                    cnt += 1
+            if cnt >= 3:
+                mag += 10
+        if EFFECT_46 in player.effects:
+            cnt = [0, 0, 0, 0]
+            for card in player.poker_scored:
+                if card.color == Poker_Color_Heart:
+                    cnt[0] = 1
+                if card.color == Poker_Color_Club:
+                    cnt[1] = 1
+                if card.color == Poker_Color_Diamond:
+                    cnt[2] = 1
+                if card.color == Poker_Color_Plum:
+                    cnt[3] = 1
+            if sum(cnt) == 4:
+                mult += 3
+        if EFFECT_47 in player.effects and play_type == Score_Name_Two_Pair:
+            mult += 2
+        if EFFECT_48 in player.effects and play_type == Score_Name_Three:
+            mult += 3
+        if EFFECT_49 in player.effects and play_type == Score_Name_Four:
+            mult += 4
+        if EFFECT_50 in player.effects and play_type == Score_Name_Straight:
+            mult += 3
+        if EFFECT_51 in player.effects and play_type == Score_Name_Flush:
+            mult += 2
+        if EFFECT_53 in player.effects:
+            if random.randint(1, 4) == 1:
+                player.level[play_type] += 1
+        if EFFECT_54 in player.effects:
+            mag += sum(player.level.values()) * 0.1
+        if EFFECT_55 in player.effects:
+            for k, v in player.level:
+                player.level[k] += 1
+        if EFFECT_56 in player.effects:
+            player.level[play_type] += 1
+        if EFFECT_57 in player.effects:
+            chip += 2 * len(mgr.deck.cards)
+        if EFFECT_58 in player.effects:
+            cnt = 0
+            for card in mgr.deck.cards:
+                if card.Material == Poker_Material_Stone:
+                    cnt += 1
+            chip += 25 * cnt
+        if EFFECT_59 in player.effects:
+            cnt = 0
+            for card in mgr.deck.cards:
+                if card.Material == Poker_Material_Iron:
+                    cnt += 1
+            mag += 0.2 * cnt
+        if EFFECT_60 in player.effects:
+            cnt = 0
+            for card in mgr.deck.cards:
+                if card.Material in [Poker_Material_Universal, Poker_Material_Gold, Poker_Material_Glass, Poker_Material_Iron, Poker_Material_Stone, Poker_Material_Lucky, Poker_Material_Chip, Poker_Material_Magnification]:
+                    cnt += 1
+            mult += 0.1 * cnt
+        if EFFECT_61 in player.effects:
+            if len(mgr.get_all_pokers()) > 52:
+                mult += 0.25 * (len(mgr.get_all_pokers()) - 52)
+        if EFFECT_62 in player.effects:
+            if len(mgr.get_all_pokers()) < 52:
+                mag += 4 * (52 - len(mgr.get_all_pokers()))
+        if EFFECT_63 in player.effects:
+            cnt = 0
+            for card in mgr.get_all_pokers():
+                if card.Material == Poker_Material_Glass:
+                    cnt += 1
+            mult += cnt * 0.75
+        if EFFECT_64 in player.effects:
+            cnt = 0
+            for card in mgr.get_all_pokers():
+                if card.Material is not None:
+                    cnt += 1
+            if cnt > 16:
+                mult += 3
+        if EFFECT_65 in player.effects:
+            cnt = 0
+            for card in mgr.get_all_pokers():
+                if card.Number in [Poker_Number_J, Poker_Number_Q, Poker_Number_K]:
+                    cnt += 1
+            if cnt < 12:
+                mult += cnt * 1
+        if EFFECT_66 in player.effects:
+            cnt = 0
+            for card in player.poker_unscored:
+                if card.number == Poker_Number_K:
+                    cnt += 1
+            mult += cnt * 1.5
+        if EFFECT_67 in player.effects:
+            if len(player.poker_unscored) == 0:
+                mg += 15
+        if EFFECT_68 in player.effects:
+            cnt = 0
+            for card in mgr.get_all_pokers():
+                if card.Material == Poker_Material_Gold:
+                    cnt += 1
+            player.gold += cnt * CONDITIN_GOLD_BASE
+        if EFFECT_69 in player.effects:
+            mag += 3 * len(player.effects)
+        if EFFECT_71 in player.effects:
+            cnt = player.gold // CONDITIN_GOLD_BASE
+            chip += cnt * 20
+        if EFFECT_72 in player.effects:
+            if random.randint(1, 6) == 1:
+                mult += 4
+        if EFFECT_73 in player.effects:
+            _max_int = 7
+            if random.randint(1, _max_int) == 1:
+                chip += 100
+            if random.randint(1, _max_int) == 2:
+                mag += 4
+            if random.randint(1, _max_int) == 3:
+                mag += 20
+            if random.randint(1, _max_int) == 4:
+                chip += 20
+            if random.randint(1, _max_int) == 5:
+                mult += 0.25
+            if random.randint(1, _max_int) == 6:
+                mult = 0
+            if random.randint(1, _max_int) == 7:
+                mult += 1
+        if EFFECT_74 in player.effects:
+            cnt = player.gold // CONDITIN_GOLD_BASE
+            mag += 2 * cnt
+        if EFFECT_75 in player.effects:
+            if len(player.poker_play) == 1:
+                card = player.poker_play[0]
+                tmp = Poker()
+                tmp.Color = card.Color
+                tmp.Number = card.Number
+                tmp.Material = card.Material
+                tmp.Wax = card.Wax
+                mgr.deck.Add(tmp)
+        if EFFECT_76 in player.effects:
+            if play_type == Score_Name_Straight:
+                for card in player.poker_scored:
+                    if card.number == Poker_Number_A:
+                        gm.DrawConsume(player)
+                        break
+        if EFFECT_77 in player.effects:
+            if play_type == Score_Name_Straight_Flush:
+                gm.DrawConsume(player)
+        if EFFECT_78 in player.effects:
+            if player.gold < 5 * CONDITIN_GOLD_BASE:
+                gm.DrawConsume(player)
+        if EFFECT_79 in player.effects:
+            cnt = 0
+            for card in mgr.get_all_pokers():
+                if card.number == Poker_Number_9:
+                    cnt += 1
+            for i in range(0, cnt):
+                gm.DrawConsume(player)
+        if EFFECT_70:
+            gm.DrawConsume(player)
         return chip, mag, mult

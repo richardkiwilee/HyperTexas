@@ -310,3 +310,8 @@ class Manager:
         info['last_used_cards'] = self.last_used_cards
         info['deck'] = [i.to_dict() for i in self.deck]       # 默认玩家是无法看到牌顶的
         return info
+
+    def DrawConsume(self, player):
+        _ = self.consume.Draw()
+        _.setVisible(player.username)
+        player.hand_cards.append(_)

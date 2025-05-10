@@ -1,4 +1,5 @@
 import time
+import traceback
 from concurrent import futures
 import queue
 import random
@@ -245,8 +246,9 @@ class LobbyServicer(rpc.LobbyServicer):
                     logger.error(f'In calculating base score: {ex}')
                 try:
                     chip, mag, mult = EffectHelper.CalculateStart(_type, chip, mag, mult, player, self.gm)
-                    for poker in _score_pokers:
-                        chip, mag, mult = EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, self.gm, poker)
+                    for i in range(0, len(_score_pokers)):
+                        poker = _score_pokers[i]
+                        chip, mag, mult = EffectHelper.CalculateScoredPoker(i, _type, chip, mag, mult, player, self.gm, poker)
                     for poker in _unscore_pokers:
                         chip, mag, mult = EffectHelper.CalculateUnScoredPoker(_type, chip, mag, mult, player, self.gm, poker)
                     chip, mag, mult = EffectHelper.CalculateEnd(_type, chip, mag, mult, player, self.gm)
@@ -260,6 +262,7 @@ class LobbyServicer(rpc.LobbyServicer):
                         }
                 except Exception as ex:
                     logger.error(f'In creating score dict: {ex}')
+                    traceback.print_exc()
                 try:
                     if self.isAllPlayerReady():
                         # 计算分数
