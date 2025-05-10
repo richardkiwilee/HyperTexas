@@ -188,7 +188,8 @@ class Client:
         try:
             # 如果是公共牌, 格式以pub.开头
             if arg.startswith('pub.') or arg.startswith('p.'):
-                num = int(ord(arg[3].lower()) - ord('a'))
+                _ = arg.split('.')[1].lower()
+                num = int(ord(_) - ord('a'))
                 return arg
             # 如果是指定玩家的牌, 以p<num>.开头 根据p<num>找到玩家编号
             if arg.startswith('p') and not arg.startswith('p.'):

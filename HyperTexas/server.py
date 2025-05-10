@@ -228,6 +228,9 @@ class LobbyServicer(rpc.LobbyServicer):
                     _poker_play.append(self.getPokerByArg(body['arg4']))
                     _poker_play.append(self.getPokerByArg(body['arg5']))
                     _poker_play = [i for i in _poker_play if i is not None]
+                except Exception as ex:
+                    logger.error(f'In getPokerByArg: {ex}')
+                try:
                     _type, _score_pokers = PokerScorer.score(_poker_play)
                     _unscore_pokers = set(self.gm.public_cards + player.pokers) - set(_score_pokers)
                     print(set(_score_pokers))
@@ -238,6 +241,9 @@ class LobbyServicer(rpc.LobbyServicer):
                     level = player.level[_type]
                     chip += _chip1 * level
                     mag += _mag1 * level
+                except Exception as ex:
+                    logger.error(f'In calculating base score: {ex}')
+                try:
                     chip, mag, mult = EffectHelper.CalculateStart(_type, chip, mag, mult, player, self.gm)
                     for poker in _score_pokers:
                         chip, mag, mult = EffectHelper.CalculateScoredPoker(_type, chip, mag, mult, player, self.gm, poker)
@@ -252,6 +258,9 @@ class LobbyServicer(rpc.LobbyServicer):
                         'mag': mag,
                         'mult': mult
                         }
+                except Exception as ex:
+                    logger.error(f'In creating score dict: {ex}')
+                try:
                     if self.isAllPlayerReady():
                         # 计算分数
                         self.gm.game_status = GameStatus.SCORE.value
@@ -432,7 +441,7 @@ class LobbyServicer(rpc.LobbyServicer):
         if arg is None:
             return None
         try:
-            if arg.startswith('pub.'):
+            if arg.startswith('pub.') or arg.startswith('p.'):
                 _ = arg.split('.')[1]
                 num = int(ord(_) - ord('a'))
                 return self.gm.public_cards[num]
