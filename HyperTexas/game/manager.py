@@ -2,6 +2,7 @@ from typing import List, Set, Dict, Any, Optional
 from HyperTexas.game.deck import Deck, ConsumeDeck
 from HyperTexas.game.poker import *
 import random
+import traceback
 from HyperTexas.game.game_enum import *
 
 
@@ -20,6 +21,24 @@ class Manager:
         self.current_player_index = 0  # 当前操作玩家的索引
         self.round_confirmations = set()  # type: Set[Any]  # 记录已确认结果的玩家
         self.game_status = GameStatus.LOBBY.value
+
+    def getPokerByArg(self, arg):
+        if arg is None:
+            return None
+        try:
+            if arg.startswith('pub.') or arg.startswith('p.'):
+                _ = arg.split('.')[1]
+                num = int(ord(_) - ord('a'))
+                return self.public_cards[num]
+            else:
+                index = int(arg[1])
+                _ = arg.split('.')[1]
+                num = int(ord(_) - ord('a'))
+                return self.player_order[index - 1].pokers[num]
+        except Exception as ex:
+            logger.error(f'In getPokerByArg: {ex}')
+            traceback.print_exc()
+
 
     def get_all_pokers(self) -> List[Any]:
         """Get all pokers in the game"""
@@ -315,3 +334,4 @@ class Manager:
         _ = self.consume.Draw()
         _.setVisible(player.username)
         player.hand_cards.append(_)
+

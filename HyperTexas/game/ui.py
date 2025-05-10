@@ -180,14 +180,17 @@ def create_public_cards_area(info: dict) -> Group:
     
     return Group(card_slots_row, slot_numbers_row)
 
-def format_card_list(myname, cards: list, title: str, max_items: int = 3) -> Panel:
+def format_card_list(myname, cards: list, title: str, max_items: int = 3, detail=False) -> Panel:
     formatted_cards = []
     for i, card in enumerate(reversed(cards[-max_items:])):
         try:
             if card.get('Color'):  # 用于显示抽牌堆
                 formatted_cards.append(Poker.format(myname, card))
             else:  # 用于显示最后使用的卡
-                formatted_cards.append(card['name'])
+                if not detail:
+                    formatted_cards.append(card['name'])
+                else:
+                    formatted_cards.append(card['desc'])
         except Exception as ex:
             print(ex, card)
             traceback.print_exc()
@@ -198,7 +201,7 @@ def format_card_list(myname, cards: list, title: str, max_items: int = 3) -> Pan
     
     return Panel("\n".join(formatted_cards), title=title, width=20, box=box.SQUARE)
 
-def RefreshScreen(myname, info: dict):
+def RefreshScreen(myname, info: dict, detail=False):
     _ = os.system('cls')
     console = Console()
     console.clear()
@@ -240,8 +243,8 @@ def RefreshScreen(myname, info: dict):
         player_table = create_player_table(myname, info['players'], info)
 
         # 创建卡组和使用记录面板
-        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部")
-        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡")
+        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部", detail=detail)
+        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡", detail=detail)
         
         # 创建游戏记录
         log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)
@@ -275,8 +278,8 @@ def RefreshScreen(myname, info: dict):
         centered_public_cards = Padding(public_cards_area, (1, 30))
         layout["top"].update(centered_public_cards)
         player_table = create_player_table(myname, info['players'], info)
-        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部")
-        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡")
+        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部", detail=detail)
+        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡", detail=detail)
         log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)
         layout["left"].update(player_table)
         layout["deck_area"].update(Padding(deck_panel, (0, 1)))
@@ -328,8 +331,8 @@ def RefreshScreen(myname, info: dict):
         centered_public_cards = Padding(public_cards_area, (1, 30))
         layout["top"].update(centered_public_cards)
         player_table = create_player_table_score(myname, info['players'], info)
-        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部")
-        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡")
+        deck_panel = format_card_list(myname, info['deck'], "抽牌堆顶部", detail=detail)
+        used_panel = format_card_list(myname, info['last_used_cards'], "最近使用的卡", detail=detail)
         log_panel = Panel("\n".join(info['game_log']), title="游戏记录", box=box.SQUARE)
         layout["left"].update(player_table)
         layout["deck_area"].update(Padding(deck_panel, (0, 1)))

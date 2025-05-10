@@ -125,6 +125,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     random.shuffle(self.gm.player_order)                
                     # 发初始手牌
                     for player in self.gm.player_order:
+                        player.effects = []
                         for i in range(2):
                             try:
                                 _ = self.gm.deck.Draw()
@@ -165,10 +166,17 @@ class LobbyServicer(rpc.LobbyServicer):
                 if card_id:
                     # TODO: 实现使用卡牌逻辑
                     num = int(ord(card_id) - ord('a')) - len(player.pokers)
-                    _card = player.hand_cards.pop(num)
-                    for p in self.gm.player_order:
-                        _card.setVisible(p)
-                    self.gm.last_used_cards.append(_card)
+                    try:
+                        _card = player.hand_cards.pop(num)
+                        _card.call(player, self.gm, 
+                        body.get('arg2'), body.get('arg3'), body.get('arg4'), 
+                        None, None)
+                        for p in self.gm.player_order:
+                            _card.setVisible(p)
+                        self.gm.last_used_cards.append(_card)
+                    except Exception as ex:
+                        logger.error(f'Use card error: {ex}')
+                        traceback.print_exc()
                     self._next_player()
                     self._broadcast()
             if body['action'] == TurnAction.USE_SKILL.value:

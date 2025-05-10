@@ -29,6 +29,7 @@ class Client:
         self.table_info = dict()
         self.running = True  # 添加运行状态标志
         retry = 0
+        self.detail = False
         loginResp = self.sendMessage(LobbyAction.LOGIN.value, self.username, None, None, None, None)
         if loginResp.status != 200:
             print('Failed to login lobby: {}'.format(loginResp.msg))
@@ -106,6 +107,8 @@ class Client:
                     continue
                 if action in ['sync', 's']:
                     self.sendMessage(LobbyAction.SYNC.value, self.username, arg2, arg3, arg4, arg5)
+                if action == 'detail':
+                    self.detail = not self.detail
                 # 根据游戏状态处理不同的命令
                 if self.table_info.get('game_status') == GameStatus.SCORE.value:
                     self.sendMessage(LobbyAction.READY.value, self.username, arg2, arg3, arg4, arg5)                    
@@ -162,7 +165,7 @@ class Client:
                 if not self.running:  # 检查运行状态
                     break
                 self.table_info = json.loads(resp.body)
-                RefreshScreen(self.username, self.table_info)
+                RefreshScreen(self.username, self.table_info, self.detail)
         except grpc.RpcError as rpc_error:
             print('Stream interrupted: RPC Error -', rpc_error.code())
             traceback.print_exc()
