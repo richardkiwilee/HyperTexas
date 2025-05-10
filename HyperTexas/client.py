@@ -1,6 +1,7 @@
 import time
 import grpc
 import threading
+import traceback
 import queue
 import sys
 import random
@@ -122,6 +123,8 @@ class Client:
                         self.sendMessage('skill', arg1, arg2, arg3, arg4, arg5)
                     elif action == 'c':
                         self.sendMessage('card', arg1, arg2, arg3, arg4, arg5)
+                    elif action == 'p':
+                        self.sendMessage('pass', arg1, arg2, arg3, arg4, arg5)
                     else:
                         print('In game, available commands: skill, card, exit')
                 if self.table_info.get('game_status') == GameStatus.WAIT_PLAY.value:
@@ -162,10 +165,12 @@ class Client:
                 RefreshScreen(self.username, self.table_info)
         except grpc.RpcError as rpc_error:
             print('Stream interrupted: RPC Error -', rpc_error.code())
+            traceback.print_exc()
             self.running = False
             os._exit(1)
         except Exception as ex:
             print('Stream interrupted:', str(ex))
+            traceback.print_exc()
             self.running = False
             os._exit(1)
 
@@ -206,6 +211,7 @@ class Client:
                 return f'p{_index}.{arg}'
         except Exception as ex:
             raise Exception(f'Get poker error: {arg}, error: {str(ex)}')
+            
 
 def main(address='localhost', port=50051, username=None):
     chars = string.ascii_letters

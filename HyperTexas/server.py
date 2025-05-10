@@ -132,6 +132,7 @@ class LobbyServicer(rpc.LobbyServicer):
                                 player.pokers.append(_)
                             except Exception as ex:
                                 logger.error(f'Draw poker error: {ex}')
+                                traceback.print_exc()
                         for i in range(3):
                             try:
                                 _ = self.gm.consume.Draw()
@@ -139,6 +140,7 @@ class LobbyServicer(rpc.LobbyServicer):
                                 player.hand_cards.append(_)
                             except Exception as ex:
                                 logger.error(f'Draw consume error: {ex}')
+                                traceback.print_exc()
                         pass
                     self.gm.current_player_index = 0
                     self.gm.game_status = GameStatus.GAME.value
@@ -155,12 +157,18 @@ class LobbyServicer(rpc.LobbyServicer):
                 self._broadcast()
                 return self._response(1, 400, json.dumps(f'Not your turn, current player index: {self.gm.current_player_index}'))            
             # 根据公共牌数量判断游戏阶段
+            player = self.getPlayerFromSender(sender)
             public_cards_count = len(self.gm.public_cards)
             if body['action'] == TurnAction.USE_CARD.value:
                 # 处理使用卡牌
                 card_id = body.get('arg1')
                 if card_id:
                     # TODO: 实现使用卡牌逻辑
+                    num = int(ord(card_id) - ord('a')) - len(player.pokers)
+                    _card = player.hand_cards.pop(num)
+                    for p in self.gm.player_order:
+                        _card.setVisible(p)
+                    self.gm.last_used_cards.append(_card)
                     self._next_player()
                     self._broadcast()
             if body['action'] == TurnAction.USE_SKILL.value:
@@ -174,15 +182,6 @@ class LobbyServicer(rpc.LobbyServicer):
                 # 处理过牌
                 self._next_player()
                 self._broadcast()
-            if body['action'] == TurnAction.FOLD.value:
-                # 处理弃牌
-                if sender in self.gm.player_order:
-                    self.gm.player_order.remove(sender)
-                    if len(self.gm.player_order) <= 1:
-                        # 只剩一个玩家，进入计分阶段
-                        self.gm.game_status = GameStatus.SCORE.value
-                    self._next_player()
-                    self._broadcast()
 
             # 检查是否需要发更多公共牌            
             if self._round_complete():
@@ -231,6 +230,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     _poker_play = [i for i in _poker_play if i is not None]
                 except Exception as ex:
                     logger.error(f'In getPokerByArg: {ex}')
+                    traceback.print_exc()
                 try:
                     _type, _score_pokers = PokerScorer.score(_poker_play)
                     _unscore_pokers = set(self.gm.public_cards + player.pokers) - set(_score_pokers)
@@ -244,6 +244,7 @@ class LobbyServicer(rpc.LobbyServicer):
                     mag += _mag1 * level
                 except Exception as ex:
                     logger.error(f'In calculating base score: {ex}')
+                    traceback.print_exc()
                 try:
                     chip, mag, mult = EffectHelper.CalculateStart(_type, chip, mag, mult, player, self.gm)
                     for i in range(0, len(_score_pokers)):
@@ -285,6 +286,7 @@ class LobbyServicer(rpc.LobbyServicer):
                                 self.score_dict[player.username]['win'] = False                        
                 except Exception as ex:
                     logger.error(f'In Calculate Score: {ex}')
+                    traceback.print_exc()
                 self._broadcast()
                 return self._response(1, 200, json.dumps('Turn Completed'))
         # 计分状态
@@ -305,6 +307,7 @@ class LobbyServicer(rpc.LobbyServicer):
                             self.gm.deck.cards.append(card)
                         except Exception as ex:
                             logger.error(f'Pop from public cards error: {ex}')
+                            traceback.print_exc()
                     for player in self.gm.player_order:
                         while len(player.pokers) > 0:
                             try:
@@ -312,6 +315,7 @@ class LobbyServicer(rpc.LobbyServicer):
                                 self.gm.deck.cards.append(card)
                             except Exception as ex:
                                 logger.error(f'Pop from player pokers error: {ex}')
+                                traceback.print_exc()
                     self.gm.deck.shuffle()
                     for card in self.gm.deck.cards:
                         card.ResetVisible()
@@ -324,6 +328,7 @@ class LobbyServicer(rpc.LobbyServicer):
                                 player.pokers.append(_)
                             except Exception as ex:
                                 logger.error(f'Draw poker error: {ex}')
+                                traceback.print_exc()
                         for i in range(3):
                             try:
                                 _ = self.gm.consume.Draw()
@@ -331,6 +336,7 @@ class LobbyServicer(rpc.LobbyServicer):
                                 player.hand_cards.append(_)
                             except Exception as ex:
                                 logger.error(f'Draw consume error: {ex}')
+                                traceback.print_exc()
             self._broadcast()
             return self._response(1, 200, json.dumps('Round Complete'))
         self._broadcast()
@@ -369,6 +375,7 @@ class LobbyServicer(rpc.LobbyServicer):
                 yield message
         except Exception as e:
             logger.error(f"Error in subscription stream for {request.sender}: {e}")
+            traceback.print_exc()
         finally:
             # Cleanup when client disconnects
             if request.sender in self.users:
@@ -384,53 +391,58 @@ class LobbyServicer(rpc.LobbyServicer):
                             body=json.dumps(info))
 
     def _broadcast(self):
-        self.seq += 1
-        data = dict()
-        data['game_status'] = self.gm.game_status
-        if data['game_status'] == GameStatus.LOBBY.value:
-            ready_status = dict()
-            for user, _data in self.users.items():
-                ready_status[user] = _data['ready']
-            data['ready_status'] = ready_status
-        if data['game_status'] == GameStatus.GAME.value:
-            data['current_player_index'] = self.gm.current_player_index
-            data['players'] = [p.to_dict() for p in self.gm.player_order]
-            data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
-            data['last_used_cards'] = self.gm.last_used_cards
-            data['deck'] = self.gm.deck.dump()
-        if data['game_status'] == GameStatus.WAIT_PLAY.value:
-            data['current_player_index'] = self.gm.current_player_index
-            data['players'] = [p.to_dict() for p in self.gm.player_order]
-            data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
-            data['last_used_cards'] = self.gm.last_used_cards
-            data['deck'] = self.gm.deck.dump()
-            _ = dict()
-            for k, v in self.users.items():
-                _[k] = v['ready']
-            data['ready_status'] = _
-        if data['game_status'] == GameStatus.SCORE.value:
-            data['current_player_index'] = self.gm.current_player_index
-            data['players'] = [p.to_dict() for p in self.gm.player_order]
-            data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
-            data['last_used_cards'] = self.gm.last_used_cards
-            data['deck'] = self.gm.deck.dump()
-            data['score_dict'] = self.score_dict
-            _ = dict()
-            for k, v in self.users.items():
-                _[k] = v['ready']
-            data['ready_status'] = _
-            logger.info(f'broadcast score data: {data["ready_status"]}')
-        _obj = pb2.Broadcast(
-            sequence=self.seq,
-            msgtype=0,
-            status=200,
-            sender='__SYSTEM__',
-            body=json.dumps(data)
-        )
-        for user in self.users:
-            if 'stream' in self.users[user]:
-                self.users[user]['stream'].put(_obj)
-        return data
+        try:
+            self.seq += 1
+            data = dict()
+            data['game_status'] = self.gm.game_status
+            if data['game_status'] == GameStatus.LOBBY.value:
+                ready_status = dict()
+                for user, _data in self.users.items():
+                    ready_status[user] = _data['ready']
+                data['ready_status'] = ready_status
+            if data['game_status'] == GameStatus.GAME.value:
+                data['current_player_index'] = self.gm.current_player_index
+                data['players'] = [p.to_dict() for p in self.gm.player_order]
+                data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
+                data['last_used_cards'] = [c.to_dict() for c in self.gm.last_used_cards]
+                data['deck'] = self.gm.deck.dump()
+            if data['game_status'] == GameStatus.WAIT_PLAY.value:
+                data['current_player_index'] = self.gm.current_player_index
+                data['players'] = [p.to_dict() for p in self.gm.player_order]
+                data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
+                data['last_used_cards'] = [c.to_dict() for c in self.gm.last_used_cards]
+                data['deck'] = self.gm.deck.dump()
+                _ = dict()
+                for k, v in self.users.items():
+                    _[k] = v['ready']
+                data['ready_status'] = _
+            if data['game_status'] == GameStatus.SCORE.value:
+                data['current_player_index'] = self.gm.current_player_index
+                data['players'] = [p.to_dict() for p in self.gm.player_order]
+                data['public_cards'] = [c.to_dict() for c in self.gm.public_cards]
+                data['last_used_cards'] = [c.to_dict() for c in self.gm.last_used_cards]
+                data['deck'] = self.gm.deck.dump()
+                data['score_dict'] = self.score_dict
+                _ = dict()
+                for k, v in self.users.items():
+                    _[k] = v['ready']
+                data['ready_status'] = _
+                logger.info(f'broadcast score data: {data["ready_status"]}')
+            _obj = pb2.Broadcast(
+                sequence=self.seq,
+                msgtype=0,
+                status=200,
+                sender='__SYSTEM__',
+                body=json.dumps(data)
+            )
+            for user in self.users:
+                if 'stream' in self.users[user]:
+                    self.users[user]['stream'].put(_obj)
+            return data
+        except Exception as e:
+            logger.error(f'Error in broadcast: {e}')
+            logger.error(f'{data}')
+            traceback.print_exc()
 
     def _onDisconnectWrapper(self, request, context):
         def callback():
@@ -455,6 +467,7 @@ class LobbyServicer(rpc.LobbyServicer):
                 return self.gm.player_order[index - 1].pokers[num]
         except Exception as ex:
             logger.error(f'In getPokerByArg: {ex}')
+            traceback.print_exc()
 
 def server(port=50051):
     logger.info('Starting server')

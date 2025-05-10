@@ -1,5 +1,6 @@
 #encoding=utf-8
 import imp
+import traceback
 from rich.table import Table
 from rich.console import Console
 from rich.console import Group
@@ -181,20 +182,16 @@ def create_public_cards_area(info: dict) -> Group:
 
 def format_card_list(myname, cards: list, title: str, max_items: int = 3) -> Panel:
     formatted_cards = []
-    for i, card in enumerate(cards[:max_items]):
-        if 'player' in card:  # 用于显示最后使用的卡
-            color_map = {1: '', 2: '', 3: '', 4: ''}
-            number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
-            color = color_map.get(card['Color'], '?')
-            number = number_map.get(card['Number'], str(card['Number']))
-            formatted_cards.append(f"{color}{number} by {card['player']}")
-        else:  # 用于显示抽牌堆
-            color_map = {1: '', 2: '', 3: '', 4: ''}
-            number_map = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
-            color = color_map.get(card['Color'], '?')
-            number = number_map.get(card['Number'], str(card['Number']))
-            formatted_cards.append(Poker.format(myname, card))
-    
+    for i, card in enumerate(reversed(cards[-max_items:])):
+        try:
+            if card.get('Color'):  # 用于显示抽牌堆
+                formatted_cards.append(Poker.format(myname, card))
+            else:  # 用于显示最后使用的卡
+                formatted_cards.append(card['name'])
+        except Exception as ex:
+            print(ex, card)
+            traceback.print_exc()
+
     # 如果卡片数量不足，用空行填充
     while len(formatted_cards) < max_items:
         formatted_cards.append("---")

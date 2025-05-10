@@ -19,8 +19,12 @@ class Card:
         pass
 
     def setVisible(self, user):
-        if user not in self.visible:
-            self.visible.append(user)
+        try:
+            if user.username not in self.visible:
+                self.visible.append(user.username)
+        except:
+            if user not in self.visible:
+                self.visible.append(user)
 
     def ResetVisible(self):
         self.visible = []
